@@ -7,16 +7,11 @@
 `frontend/public/neo-hologram/` 에 있던 폴더를, GitHub Pages 로 따로 서빙하려고
 떼어낸 저장소입니다. 분리한 이유와 그때 정한 것들은 [docs/decisions.md](docs/decisions.md) 에 있습니다.
 
-> **현재 상태: 이관 전입니다.** 이 저장소에는 아직 도감 코드가 없습니다.
-> 원본 폴더를 **커밋 히스토리를 살려서** 옮기는 절차가
-> [docs/migration.md](docs/migration.md) 에 있습니다. 복붙하지 마세요.
-> 이관이 끝나면 이 인용 블록을 지우고 아래 '주소' 에 실제 URL 을 넣으세요.
-
 ## 주소
 
 | 환경 | 주소 |
 | --- | --- |
-| Pages (기본) | `https://sajoyo.github.io/DAENGS_CARDS/` — 이관·Pages 활성화 후 |
+| Pages (기본) | <https://sajoyo.github.io/DAENGS_CARDS/> |
 | 커스텀 도메인 | 미정. 서브도메인 이름이 아직 안 정해졌습니다 ([docs/deploy.md](docs/deploy.md) 2단계) |
 
 **둘 다 HTTPS 입니다.** 그게 이 저장소를 판 실질적인 이유입니다 — 폰의 자이로
@@ -39,7 +34,7 @@ py -m http.server 5173        # 또는: npx serve .
 같은 LAN 에서 PC IP 로 접속해야 하는데 그건 secure context 가 아니라 안 켜집니다 —
 방법은 도감 문서의 '폰에서 확인하기' 절을 보세요.
 
-## 구성 (이관 후)
+## 구성
 
 | 경로 | 내용 |
 | --- | --- |
@@ -53,8 +48,8 @@ py -m http.server 5173        # 또는: npx serve .
 | `.nojekyll` | Pages 가 `_` 로 시작하는 파일을 삼키지 않게 합니다 |
 | `docs/` | [문서 색인](docs/README.md) |
 
-각 파일이 무엇을 하고 왜 그렇게 되어 있는지는 이관해 온 도감 문서
-(`docs/hologram.md`) 에 있습니다 — 600줄이 넘고, **다시 밟지 말 것** 목록이 거기 있습니다.
+각 파일이 무엇을 하고 왜 그렇게 되어 있는지는 [docs/hologram.md](docs/hologram.md) 에
+있습니다 — 670줄이고, **다시 밟지 말 것** 목록이 거기 있습니다.
 
 ## 이 저장소의 전제
 

@@ -3,21 +3,23 @@
 강아지 네오가 채소가 된 트레이딩 카드 12장을, 포켓몬 카드 게임 포켓처럼 기울이고
 반짝이게 만든 데모입니다.
 
+배포: <https://sajoyo.github.io/DAENGS_CARDS/>
+
+```powershell
+py -m http.server 5173     # 저장소 루트에서. 또는 npx serve .
 ```
-http://localhost:3000/neo-hologram/index.html
-```
 
-**`/neo-hologram/` 만 치면 404 입니다.** Next 가 `public/` 안의 디렉터리 인덱스를
-잡아 주지 않아서, `index.html` 까지 붙여야 합니다.
+**`file://` 로 열면 안 됩니다** — ES 모듈과 `fetch` 가 `file:` 오리진에서 막힙니다.
+코드는 멀쩡한데 화면만 빕니다.
 
-## 이 폴더의 전제: 폴더 하나로 자족한다
+## 이 저장소의 전제: 저장소 하나로 자족한다
 
-**빌드 단계가 없습니다.** `public/` 안의 정적 파일이라 그대로 서빙되고, 고치면
+**빌드 단계가 없습니다.** 정적 파일을 Pages 가 그대로 서빙하고, 고치면
 새로고침으로 끝납니다. 번들러도 `node_modules` 도 안 씁니다 — 그래서 npm 패키지를
 `import` 할 수 없고, 필요한 건 `vendor/` 로 복사해 옵니다.
 
-이 전제를 깨는 변경(빌드 도입, 번들러 도입)은 이 폴더의 성격을 바꾸는 결정이라
-`docs/decisions.md` 에 남기고 하세요.
+이 전제를 깨는 변경(빌드 도입, 번들러 도입)은 이 저장소의 성격을 바꾸는 결정이라
+[decisions.md](decisions.md) 에 남기고 하세요 (`CARDS-003`).
 
 ## 파일
 
@@ -33,7 +35,7 @@ http://localhost:3000/neo-hologram/index.html
 | `tilt-engine.js` | 스튜디오와 **내보낸 HTML** 이 같이 쓰는 기울기(포인터·키보드·자이로). 모듈이 아닙니다 |
 | `immersive.css` / `.mjs` | No.01 전용. 꾹 누르면 카드 안으로 들어가는 별개의 뷰 |
 | `vendor/cards-css/` | `@kongyo2/cards-css` 0.5.0 (MIT) 의 포일 CSS. **원본 그대로** |
-| `art/` | 카드 그림 (webp). 원본 PNG 는 `tools/art-src/` (gitignore) |
+| `art/` | 카드 그림 (webp). **원본 PNG 는 이 저장소에 없습니다** — `DAENGS_dev` 의 `tools/art-src/` |
 
 ## 카드와 포일
 
@@ -229,7 +231,7 @@ vendor 파일은 건드리지 말고 `rarity.css` 아래쪽에서 `--hc-*` 로�
 ### secure context 가 아니면 조용히 안 켜집니다
 
 브라우저는 `deviceorientation` 을 **secure context 에서만** 줍니다. HTTPS 이거나
-`localhost` 여야 합니다. **지금 배포(nginx `:80`)는 둘 다 아닙니다** — 폰에서
+`localhost` 여야 합니다. **`DAENGS_dev` 시절 배포(nginx `:80`)는 둘 다 아니었습니다** — 폰에서
 `daengs.~` 로 들어가면 에러도 경고도 없이 그냥 안 켜집니다. 코드를 의심하기 딱
 좋은 형태이니 먼저 주소부터 보세요.
 
@@ -241,24 +243,28 @@ iOS 13+ 는 여기에 더해 `DeviceOrientationEvent.requestPermission()` 을 **
 
 ### 폰에서 확인하기
 
-**둘 다 개발용입니다.** 배포에서 켜려면 nginx 에 TLS 를 붙여야 하고, 그건 되돌리기
-번거로운 결정이라 `docs/decisions.md` 감입니다.
+**아래는 로컬에서 확인할 때의 방법입니다.** 배포된 주소는 Pages 라 **이미 HTTPS** 이므로
+폰에서 그냥 열면 자이로가 켜집니다 — 이 저장소를 분리한 이유가 그것입니다
+([CARDS-001](decisions.md#cards-001)).
 
 **안드로이드 — USB 가 제일 간단합니다.** 인증서가 필요 없습니다.
 
 ```powershell
-cd frontend; npm run dev          # 평범한 HTTP 로 띄웁니다
-adb reverse tcp:3000 tcp:3000     # 폰의 3000 → PC 의 3000
+py -m http.server 5173            # 평범한 HTTP 로 띄웁니다
+adb reverse tcp:5173 tcp:5173     # 폰의 5173 → PC 의 5173
 ```
 
-폰 크롬에서 `http://localhost:3000/neo-hologram/index.html`. 폰 입장에서 주소가
+폰 크롬에서 `http://localhost:5173/index.html`. 폰 입장에서 주소가
 `localhost` 라 secure context 로 쳐 줍니다. PC 크롬의 `chrome://inspect` 로 그
 페이지를 그대로 디버깅할 수 있습니다.
 
-**아이폰 — 로컬 HTTPS 가 필요합니다.**
+**아이폰 — 로컬 HTTPS 가 필요합니다.** ⚠️ 아래 `npm run dev:https` 는 **`DAENGS_dev` 의
+Next dev 서버 스크립트**였고 이 저장소에는 없습니다. 배포 주소가 이미 HTTPS 라 대부분은
+그쪽으로 보면 되고, 그래도 로컬에서 봐야 하면 mkcert 인증서로 정적 HTTPS 서버를
+직접 띄워야 합니다. 아래는 그때 필요한 인증서 만드는 법으로 읽으세요.
 
 ```powershell
-cd frontend; npm run dev:https
+cd frontend; npm run dev:https     # ← DAENGS_dev 쪽. 여기엔 없습니다
 ```
 
 `frontend/certificates/` 의 인증서로 `https://192.168.0.25:3000` 이 열립니다
@@ -281,9 +287,8 @@ $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -like 
 & "$env:LOCALAPPDATA\mkcert\mkcert-v1.4.4-windows-amd64.exe" -key-file localhost-key.pem -cert-file localhost.pem localhost 127.0.0.1 ::1 $ip
 ```
 
-`next.config.ts` 의 `allowedDevOrigins` 도 여기에 걸립니다. Next 는 localhost 가 아닌
-곳에서 오는 dev 리소스 요청을 기본으로 막는데, 막히면 앱 페이지가 하얗게 뜹니다
-(이 데모는 `public/` 정적 파일이라 막혀도 열리긴 합니다).
+(`DAENGS_dev` 시절에는 `next.config.ts` 의 `allowedDevOrigins` 도 여기에 걸렸습니다.
+**이 저장소에는 해당 없습니다** — 정적 서버라 그런 차단이 없습니다.)
 
 ### 네이티브 앱에서
 
@@ -431,11 +436,11 @@ oilslick 의 `exclusion` 반전 무지개, holo 의 간섭 띠, mosaic 의 **반
 특성이라 CPU 스로틀링으로 흉내가 안 납니다. 실기 원격 디버깅이 필요합니다:
 
 ```powershell
-cd frontend; npm run dev           # 레포 루트가 아니라 frontend/ 에서
-adb reverse tcp:3000 tcp:3000
+py -m http.server 5173             # 저장소 루트에서
+adb reverse tcp:5173 tcp:5173
 ```
 
-폰 크롬에서 `http://localhost:3000/neo-hologram/index.html`, PC 크롬에서
+폰 크롬에서 `http://localhost:5173/index.html`, PC 크롬에서
 `chrome://inspect`. 쓸 만한 것은 Rendering 탭에 있습니다:
 
 - **Paint flashing** — 스크롤할 때 뷰포트 전체가 번쩍이면 배경이 범인입니다 (한 번 밟아서 고쳤습니다, 아래 참고)
@@ -454,7 +459,7 @@ adb reverse tcp:3000 tcp:3000
 # 헤드리스로 찍고 (?im=<카드 id> 가 이머시브를 바로 엽니다)
 chrome.exe --headless=new --disable-gpu --window-size=430,900 `
   --virtual-time-budget=12000 --screenshot=before.png `
-  "http://localhost:3000/neo-hologram/index.html?im=cabbage"
+  "http://localhost:5173/index.html?im=cabbage"
 
 uv run --no-project --python 3.12 python tools/pngdiff.py before.png after.png
 # → 평균차 0.29 / 255    눈에 띄는 픽셀  0.35%
@@ -540,9 +545,9 @@ NeoTilt.gyro({ onLive: () => { … } });   // 첫 값이 실제로 들어왔을 
 | 어디서 열었나 | 자이로 |
 | --- | --- |
 | `https://…` (`npm run dev:https`, 3000) | ✅ |
-| `http://localhost:3000` · `127.0.0.1` | ✅ (평문이라도 크롬이 secure 로 침) |
+| `http://localhost:5173` · `127.0.0.1` | ✅ (평문이라도 크롬이 secure 로 침) |
 | `http://<LAN_IP>:3000` ← 폰에서 이게 함정입니다 | ❌ |
-| 배포된 `daengs.~` (nginx `:80`) | ❌ 평문 HTTP 입니다 |
+| 배포된 Pages 주소 (`sajoyo.github.io/DAENGS_CARDS/`) | ✅ HTTPS 입니다 (`CARDS-001` 로 이렇게 됐습니다) |
 | 내보낸 HTML 을 PC 에서 `file://` 로 열기 | ✅ 크롬·파이어폭스는 `file://` 을 secure 로 칩니다 |
 | 내보낸 HTML 을 안드로이드 다운로드에서 열기 | ❌ `content://` 라 secure 가 아닙니다 |
 | iOS 사파리 | 권한을 물어야 합니다 — 첫 탭에서 `requestPermission()` 을 부릅니다 |
@@ -578,12 +583,13 @@ fetch 해서** 인라인하고, 이미지는 데이터 URL 로 넣습니다. 파
 만큼 불어납니다). 200KB webp 로 뽑으면 327KB 짜리 HTML 이 나옵니다.
 
 **스튜디오 자체는 서버로 띄워야 합니다** — ESM import 가 `file://` 에서 CORS 로
-막히고, 내보내기의 `fetch` 도 같은 이유로 막힙니다. `npm run dev` 로 열면 됩니다.
+막히고, 내보내기의 `fetch` 도 같은 이유로 막힙니다. `py -m http.server` 로 열면 됩니다.
 반대로 **내보낸 파일은 서버가 필요 없습니다** — 그게 이 기능의 요점입니다.
 
 ## 카드 한 장 추가하기
 
-1. 원본 PNG 를 `tools/art-src/` 에 두고, **webp 로 변환**해서 `art/` 에 넣습니다.
+1. 원본 PNG 를 `DAENGS_dev` 의 `tools/art-src/`(gitignore) 에 두고, **webp 로 변환**해서
+   이 저장소의 `art/` 에 넣습니다. ⚠️ **원본도 변환기도 이 저장소에 없습니다.**
    높이 1125, 품질 82 가 지금 쓰는 값입니다 (장당 150~250KB). 크롭하지 않습니다 —
    비율이 갈리는 건 괜찮고, 늘이는 게 안 됩니다.
    변환기(`convert-one.mjs` · `convert-server.mjs`)는 이 레포에 없습니다 —
@@ -660,8 +666,8 @@ grep -oh 'var(--[a-z0-9-]*' vendor/cards-css/<이름>.css | sort -u
 - **겉잎이 아직 진짜 레이어가 아닙니다.** 속과 같은 픽셀을 고리로 오려 쓰고 있어서,
   비켜도 새로 드러나는 게 없습니다. 겹마다 그린 원화가 오면 `.dio-rind` 의 마스크만
   빼고 `scene.shells` 에 `src` 를 넣으면 됩니다
-- **자이로가 배포에서는 안 켜집니다.** nginx 가 `:80` 이라 secure context 가 아닙니다.
-  코드는 들어가 있으니 TLS 만 붙으면 켜집니다 (위 '기울기 입력' 참고)
+- ~~**자이로가 배포에서는 안 켜집니다.**~~ **해소됐습니다** — Pages 가 HTTPS 라
+  secure context 입니다 (`CARDS-001`). 이 저장소를 분리한 실질적인 이유였습니다
 - **이머시브 뷰에는 자이로가 안 붙어 있습니다.** 확대 뷰까지만 붙였습니다
 
 ## 라이선스
