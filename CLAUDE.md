@@ -4,8 +4,8 @@
 `SAJOYO/DAENGS_dev` 의 `frontend/public/neo-hologram/` 을 떼어낸 저장소입니다.
 
 ```
-main 브랜치 (root)  →  GitHub Pages  →  https://sajoyo.github.io/DAENGS_CARDS/
-                                        (커스텀 도메인은 미정 — docs/deploy.md)
+main 브랜치 (root)  →  GitHub Pages  →  https://cards.weareithero.cloud/
+                                        (sajoyo.github.io/DAENGS_CARDS/ 는 여기로 301)
 ```
 
 ## 폴더
@@ -22,7 +22,7 @@ main 브랜치 (root)  →  GitHub Pages  →  https://sajoyo.github.io/DAENGS_C
 | `art/` | 카드 그림 webp. 원본 PNG 는 여기 없습니다 |
 | `audio/` | 이머시브 배경음 mp3. **여기 있는 것이 원본의 전부입니다** |
 | `.nojekyll` | Pages 의 Jekyll 처리를 끕니다 |
-| `CNAME` | 커스텀 도메인의 **정본**. 아직 없습니다 (docs/deploy.md 2단계) |
+| `CNAME` | 커스텀 도메인(`cards.weareithero.cloud`)의 **정본**. 지우면 도메인이 풀립니다 |
 | `docs/decisions.md` | 이 저장소의 의사결정 기록 (`CARDS-001 ~`) |
 | `docs/deploy.md` | Pages · DNS · HTTPS 절차와 함정 |
 | `docs/migration.md` | 원본 폴더를 히스토리 살려 옮기는 절차 |
@@ -46,9 +46,10 @@ py -m http.server 5173     # 또는 npx serve .  — 빌드도 install 도 없�
   npm 패키지가 필요하면 `import` 가 아니라 `vendor/` 로 복사해 옵니다.
   이 전제를 깨는 변경은 `docs/decisions.md` 에 남기고 하세요.
 - **경로는 전부 상대 경로로.** `./style.css` · `./vendor/...` 처럼 씁니다.
-  ⚠️ 절대 경로(`/foo`)를 쓰면 **Pages 기본 주소(`/DAENGS_CARDS/` 서브패스)에서만 깨지고
-  커스텀 도메인에서는 멀쩡합니다.** 즉 도메인을 붙이기 전에는 잘 되다가 나중에 터지거나,
-  그 반대가 됩니다. 이관 시점 기준 절대 경로 에셋은 0건이었습니다 — 그 상태를 유지하세요.
+  ⚠️ 지금은 커스텀 도메인이 루트라 절대 경로(`/foo`)를 써도 **당장은 동작합니다.**
+  그래서 더 위험합니다 — `sajoyo.github.io/DAENGS_CARDS/` 서브패스나 로컬 정적 서버에서만
+  조용히 깨지고, 로컬에서 재현하기 전까지 안 보입니다. 이관 시점 기준 절대 경로 에셋은
+  0건이었습니다. 그 상태를 유지하세요.
 - **DAENGS 본체로 돌아가는 링크는 절대 URL 이어야 합니다.** 원본에서는 `index.html` 의
   `<a class="back" href="/">← DAENGS</a>` 였는데, 이 저장소에서 `/` 는 **도감 자기 자신**입니다.
   이 저장소에서 유일하게 절대 URL 이 허용되는 자리입니다.

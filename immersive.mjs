@@ -95,24 +95,34 @@ function onOrient(e) {
   aim((e.gamma - gyroBase.g) / 30, (e.beta - gyroBase.b) / 30);
 }
 
-async function startGyro() {
+/** 허가가 난 뒤 리스너가 확실히 살아 있게 다시 붙인다. 같은 함수 참조라 중복
+ *  등록되지 않으므로(addEventListener 규약) 탭마다 불러도 공짜다. */
+function reattachOrient() {
+  addEventListener("deviceorientation", onOrient);
+}
+
+/* 여기서 권한을 직접 묻지 않는다.
+
+   예전에는 `await DOE.requestPermission()` 을 불렀고 주석에 "꾹 누른 520ms 는 제스처
+   유효 시간 안이라 통과한다" 고 적혀 있었는데 **틀렸다.** 이 함수는 롱프레스 타이머
+   안(`open()` 흐름)에서 불리고, 애초에 롱프레스의 `pointerdown` 은 터치에서 user
+   activation 을 만들지 않는다 — 연장할 활성화가 없다. iOS 에서는 NotAllowedError 로
+   즉시 거부되고 팝업조차 안 떴다.
+
+   권한은 `main.js` 의 document `click` 핸들러 한 곳이 책임진다. 이머시브 안에서 화면을
+   톡 쳐도 그 탭이 document 까지 버블링되므로 거기서 물어진다. 여기서는 리스너만
+   붙이면 된다 — 허가 전에는 이벤트가 안 올 뿐이고, 허가가 나면 흐르기 시작한다. */
+function startGyro() {
   const DOE = window.DeviceOrientationEvent;
   if (!DOE || reducedMotion) return;
-  try {
-    // iOS 는 사용자 제스처 안에서만 물어볼 수 있다. 꾹 누른 520ms 는 아직
-    // 제스처 유효 시간(수 초) 안이라 여기서 요청해도 통과한다.
-    if (typeof DOE.requestPermission === "function") {
-      if (await DOE.requestPermission() !== "granted") return;
-    }
-  } catch {
-    return;   // 권한 거부. 포인터/드래그로만 본다
-  }
   gyroBase = null;
   addEventListener("deviceorientation", onOrient);
+  if (typeof DOE.requestPermission === "function") addEventListener("click", reattachOrient);
 }
 
 function stopGyro() {
   removeEventListener("deviceorientation", onOrient);
+  removeEventListener("click", reattachOrient);
   gyroBase = null;
 }
 

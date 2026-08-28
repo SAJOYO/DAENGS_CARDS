@@ -3,7 +3,7 @@
 강아지 네오가 채소가 된 트레이딩 카드 12장을, 포켓몬 카드 게임 포켓처럼 기울이고
 반짝이게 만든 데모입니다.
 
-배포: <https://sajoyo.github.io/DAENGS_CARDS/>
+배포: <https://cards.weareithero.cloud/>
 
 ```powershell
 py -m http.server 5173     # 저장소 루트에서. 또는 npx serve .
@@ -548,7 +548,7 @@ NeoTilt.gyro({ onLive: () => { … } });   // 첫 값이 실제로 들어왔을 
 | `https://…` (`npm run dev:https`, 3000) | ✅ |
 | `http://localhost:5173` · `127.0.0.1` | ✅ (평문이라도 크롬이 secure 로 침) |
 | `http://<LAN_IP>:3000` ← 폰에서 이게 함정입니다 | ❌ |
-| 배포된 Pages 주소 (`sajoyo.github.io/DAENGS_CARDS/`) | ✅ HTTPS 입니다 (`CARDS-001` 로 이렇게 됐습니다) |
+| 배포된 주소 (`cards.weareithero.cloud`) | ✅ HTTPS 입니다 (`CARDS-001` · `CARDS-005`) |
 | 내보낸 HTML 을 PC 에서 `file://` 로 열기 | ✅ 크롬·파이어폭스는 `file://` 을 secure 로 칩니다 |
 | 내보낸 HTML 을 안드로이드 다운로드에서 열기 | ❌ `content://` 라 secure 가 아닙니다 |
 | iOS 사파리 | 권한을 물어야 합니다 — 첫 탭에서 `requestPermission()` 을 부릅니다 |
@@ -661,6 +661,21 @@ grep -oh 'var(--[a-z0-9-]*' vendor/cards-css/<이름>.css | sort -u
   덤으로 iOS 사파리도 고쳐집니다 (거기선 `attachment: fixed` 가 아예 안 먹습니다)
 - **`will-change` 를 카드 전부에 걸지 마세요.** 활성 카드에만 겁니다 — 12장에 걸면
   레이어가 12개 생깁니다
+- **자이로 권한을 `pointerdown` 에서 묻지 마세요 — iOS 에서 팝업이 아예 안 뜹니다.**
+  명세상 user activation 을 만드는 이벤트 중 `pointerdown` 은 **`pointerType === "mouse"`
+  일 때만** 해당합니다. 손가락이면 `pointerup` · `touchend` · `click` 이라야 하고, 아니면
+  `DeviceOrientationEvent.requestPermission()` 이 `NotAllowedError` 로 즉시 거부됩니다.
+  **안드로이드는 `requestPermission` 자체가 없어서 이 규칙을 안 만납니다** — 그래서
+  "안드로이드는 되는데 iOS 만 안 되는" 모양이 되고, 코드를 의심하기 딱 좋습니다.
+  `click` 하나면 터치·마우스를 다 덮습니다
+- **권한 요청 리스너를 결과 보기 전에 떼지 마세요.** `{ once: true }` 와
+  `removeEventListener` 를 핸들러 첫 줄에 두면 **실패해도 리스너가 사라져** 그 세션 내내
+  죽습니다. `.catch(() => {})` 까지 있으면 콘솔에도 안 남아서 원인을 못 찾습니다.
+  **허가가 떨어졌을 때만** 떼고, 실패는 `console.warn` 으로라도 남기세요
+- **타이머 안에서 권한을 묻지 마세요.** 이머시브가 롱프레스 520ms 뒤에 물었는데,
+  주석은 "제스처 유효 시간 안이라 통과한다" 고 적혀 있었지만 **애초에 활성화가 없어서**
+  연장할 것이 없었습니다. 권한은 `main.js` 의 document `click` 한 곳이 책임지고,
+  나머지는 리스너만 붙입니다 — 허가가 나면 이벤트가 그리로도 흐릅니다
 
 ## 아직 안 닫힌 것
 
@@ -669,7 +684,10 @@ grep -oh 'var(--[a-z0-9-]*' vendor/cards-css/<이름>.css | sort -u
   빼고 `scene.shells` 에 `src` 를 넣으면 됩니다
 - ~~**자이로가 배포에서는 안 켜집니다.**~~ **해소됐습니다** — Pages 가 HTTPS 라
   secure context 입니다 (`CARDS-001`). 이 저장소를 분리한 실질적인 이유였습니다
-- **이머시브 뷰에는 자이로가 안 붙어 있습니다.** 확대 뷰까지만 붙였습니다
+- **이머시브 뷰의 자이로는 `main.js` 의 권한에 얹혀 있습니다.** 이머시브는 롱프레스로
+  열려서 그 자리에서는 권한을 물을 수 없습니다(위 '다시 밟지 말 것'). 리스너만 붙이고
+  허가는 도감 쪽 첫 탭에 맡기므로, **`?im=` 로 이머시브를 바로 열고 한 번도 탭하지
+  않으면 iOS 에서는 자이로가 안 붙습니다.** 화면을 한 번 톡 치면 붙습니다
 
 ## 라이선스
 
