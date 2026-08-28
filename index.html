@@ -30,7 +30,10 @@
 <body>
   <div class="page">
     <header class="topbar">
-      <a class="back" href="/">← DAENGS</a>
+      <!-- 이 저장소에서 "/" 는 도감 자기 자신이라 절대 URL 이어야 한다.
+           ⚠️ http 인 것은 의도다 — DAENGS 본체는 nginx :80 평문이고 TLS 가 없다.
+           https 로 "고치면" 연결이 안 된다. 본체에 TLS 가 붙는 날 같이 바꿀 것. -->
+      <a class="back" href="http://daengs.weareithero.cloud/">← DAENGS</a>
       <a class="back studio-link" href="./studio.html">홀로 스튜디오 →</a>
     </header>
 
