@@ -11,8 +11,8 @@
 
 | 환경 | 주소 |
 | --- | --- |
-| Pages (기본) | <https://sajoyo.github.io/DAENGS_CARDS/> |
-| 커스텀 도메인 | 미정. 서브도메인 이름이 아직 안 정해졌습니다 ([docs/deploy.md](docs/deploy.md) 2단계) |
+| **정식 주소** | <https://cards.weareithero.cloud/> |
+| Pages 기본 주소 | `https://sajoyo.github.io/DAENGS_CARDS/` — 위 주소로 301 리다이렉트됩니다 |
 
 **둘 다 HTTPS 입니다.** 그게 이 저장소를 판 실질적인 이유입니다 — 폰의 자이로
 기울기(`deviceorientation`)는 secure context 에서만 켜지는데, DAENGS 본체 배포는

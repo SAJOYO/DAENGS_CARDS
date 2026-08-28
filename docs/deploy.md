@@ -4,7 +4,7 @@
 ([CARDS-003](decisions.md#cards-003)).
 
 ```
-main 브랜치의 / (root)  →  GitHub Pages  →  https://sajoyo.github.io/DAENGS_CARDS/
+main 브랜치의 / (root)  →  GitHub Pages  →  https://cards.weareithero.cloud/
 ```
 
 **`main` 에 머지되는 순간 배포됩니다.** 반영까지 보통 1분 안쪽이고, Actions 탭의
@@ -48,55 +48,89 @@ gh api repos/SAJOYO/DAENGS_CARDS/pages --jq '"\(.status) \(.html_url)"'
 
 ---
 
-## 2단계 — 커스텀 도메인 (서브도메인 미정)
+## 2단계 — 커스텀 도메인 `cards.weareithero.cloud` ✅ 완료 (2026-08-28)
 
-**이름이 안 정해져 있어 아직 못 합니다.** `cards.` / `dex.` / `holo.` 중 하나로
-정해지면 아래를 그대로 밟습니다. apex(`weareithero.cloud`)로 가려면 `CNAME` 대신
-A 4개 + AAAA 4개가 필요하고 도메인 본체를 이 데모가 차지하므로 **서브도메인을 권합니다.**
+도메인은 **가비아**에서 샀고 네임서버도 가비아입니다 (`ns.gabia.co.kr` · `ns.gabia.net` ·
+`ns1.gabia.co.kr`). 그래서 DNS 는 **My가비아 → 서비스관리 → 도메인 → DNS 정보 → DNS 관리**
+에서 고칩니다.
 
-### ① DNS
+**apex(`weareithero.cloud`)는 쓸 수 없습니다.** 이미 A `218.145.159.122` 로 자체 서버를
+가리키고 있고(`daengs.` 와 같은 IP), apex 로 가려면 그걸 뺏고 A 4개 + AAAA 4개를 넣어야 합니다.
+서브도메인이 유일하게 합리적인 선택입니다.
 
-| 종류 | 이름 | 값 |
-| --- | --- | --- |
-| `CNAME` | `<서브도메인>` | `SAJOYO.github.io` |
+### ⚠️ 순서를 뒤집으면 사이트가 양쪽 다 죽습니다
 
-### ② 조직 도메인 검증 (먼저 하세요)
+커스텀 도메인을 등록하는 순간 `sajoyo.github.io/DAENGS_CARDS/` 가 새 도메인으로
+리다이렉트됩니다. DNS 가 아직 안 풀렸으면 **갈 곳이 없습니다.**
+**① DNS → ② 전파 확인 → ③ GitHub 설정** 순서를 지키세요.
 
-Org Settings → Pages → Add a domain. `_github-pages-challenge-SAJOYO` TXT 레코드를
-넣으라고 안내합니다.
+### ① 가비아 DNS 에 CNAME 1건
 
-**안 하면 남이 가로챌 수 있습니다** — dangling DNS 하이재킹. 다른 사람이 자기 저장소에
-같은 커스텀 도메인을 등록해 버리는 형태입니다. `weareithero.cloud` 를 통째로 검증해 두면
-하위 서브도메인 전부가 보호됩니다. 조직 저장소라 더 필요합니다.
+| 타입 | 호스트 | 값/위치 | TTL |
+| --- | --- | --- | --- |
+| `CNAME` | `cards` | `sajoyo.github.io.` | 3600 |
 
-### ③ 저장소에 도메인 등록
+함정이 셋입니다:
 
-Settings → Pages → Custom domain 에 넣습니다.
+- **값 끝에 점(`.`)을 반드시 찍습니다.** 가비아는 FQDN 표기를 요구해서, 점을 빼면
+  `sajoyo.github.io.weareithero.cloud` 로 해석됩니다. **가장 흔한 실수입니다.**
+- **호스트에는 `cards` 만** 넣습니다 — `cards.weareithero.cloud` 가 아닙니다.
+- **"확인" → "저장"** 을 둘 다 눌러야 반영됩니다. 가비아는 저장이 2단계라, 확인만 누르고
+  창을 닫으면 아무 일도 일어나지 않습니다.
 
-**정본은 UI 가 아니라 저장소 루트의 `CNAME` 파일입니다.** UI 에서 설정하면 GitHub 이
-그 파일을 커밋합니다. 나중에 `--force` push 나 폴더 통째 덮어쓰기로 날리면
-**도메인이 조용히 풀립니다.** 그래서 이 저장소에는 force push 를 하지 않습니다.
+⚠️ **가비아의 웹 포워딩 서비스를 쓰면 안 됩니다.** Pages 가 깨집니다. 순수 DNS 레코드만입니다.
+
+### ② 전파 확인 — 이게 되기 전에 ③으로 가지 마세요
+
+```powershell
+nslookup cards.weareithero.cloud 8.8.8.8
+```
+
+`sajoyo.github.io` 가 나오면 됩니다. 보통 10분 ~ 1시간.
+
+### ③ GitHub 저장소에 도메인 등록
+
+Settings → Pages → Custom domain 에 `cards.weareithero.cloud` → Save.
+
+**정본은 UI 가 아니라 저장소 루트의 `CNAME` 파일입니다.** UI 에서 설정하면 GitHub 이 그
+파일을 `main` 에 커밋하므로, 로컬이 뒤처집니다 — **`git pull` 하세요.** 나중에 `--force`
+push 나 폴더 통째 덮어쓰기로 날리면 **도메인이 조용히 풀립니다.** 그래서 이 저장소에는
+force push 를 하지 않습니다.
 
 ### ④ `Enforce HTTPS`
 
-체크박스가 활성화되기까지 DNS 전파 후 몇 분 ~ 24시간 걸립니다. 회색이면 아직
-인증서가 발급되지 않은 것입니다.
+**인증서는 사지 않습니다.** 가비아가 SSL 상품을 권하지만 GitHub 이 커스텀 도메인에
+Let's Encrypt 를 자동 발급·자동 갱신합니다. `.cloud` TLD 도 문제없습니다.
 
-**인증서는 사지 않습니다.** GitHub 이 Let's Encrypt 를 자동 발급 · 자동 갱신합니다.
-`.cloud` TLD 도 문제없습니다.
+체크박스가 활성화되기까지 DNS 체크 통과 후 몇 분 ~ 24시간 걸립니다. 회색이면 아직
+발급 전입니다.
 
-### ⚠️ Cloudflare 를 쓴다면
+### ⑤ 조직 도메인 검증 (선택)
+
+Org Settings → Pages → Add a domain. **GitHub 이 TXT 레코드의 이름과 값을 화면에 보여주니
+그것을 가비아에 그대로 넣으세요** — 여기 적어 두면 어긋납니다.
+
+**Pages 동작의 전제가 아닙니다.** 남이 자기 저장소에 같은 커스텀 도메인을 등록해 가로채는
+것(dangling DNS 하이재킹)을 막는 장치입니다. 조직 저장소라 해두는 편이 낫습니다.
+
+### 확인
+
+- [ ] `nslookup` 이 `sajoyo.github.io` 를 가리키는지
+- [ ] `https://cards.weareithero.cloud/` 에서 도감·스튜디오가 뜨고 포일 11종이 다 먹는지
+- [ ] `Enforce HTTPS` 가 켜져 있고, http 접근이 https 로 넘어가는지
+- [ ] 옛 주소가 새 도메인으로 리다이렉트되는지
+- [ ] 루트(`/`)로 바뀌었으니 서브패스에서 되던 것이 그대로 되는지 — 경로가 전부 상대라
+      깨질 데가 없어야 정상입니다
+- [ ] 본체 랜딩의 도감 링크가 새 주소로 가는지 ([migration.md](migration.md) 5절)
+
+### 나중에 Cloudflare 로 옮긴다면
+
+지금은 해당 없지만, 네임서버를 Cloudflare 로 옮기면 되살아나는 제약입니다.
 
 - **프록시(주황 구름)를 켠 채로는 인증서 발급이 실패**하고 `Enforce HTTPS` 가 회색으로
   남습니다. **DNS-only(회색)로 두고 발급을 받은 뒤** 켜세요.
 - 프록시를 켤 거면 SSL 모드를 반드시 **Full (strict)** 로. `Flexible` 이면 GitHub 의
   HTTPS 강제와 물려 **무한 리다이렉트**가 납니다.
-
-### 확인
-
-- [ ] `Enforce HTTPS` 가 켜져 있고, http 접근이 https 로 넘어가는지
-- [ ] 루트(`/`)로 바뀌었으니 서브패스에서 되던 것이 그대로 되는지
-- [ ] 본체 랜딩의 도감 링크가 새 주소로 가는지 ([migration.md](migration.md) 5절)
 
 ---
 
