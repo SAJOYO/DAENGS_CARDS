@@ -322,14 +322,29 @@ function makeStage(card, { lazy = true, button = true } = {}) {
   const shell = button
     ? '<button class="card" type="button">'
     : '<div class="card" tabindex="0" role="img">';
+
+  // 누끼 팝아웃은 scene.subject 와 scene.fit 이 둘 다 있는 카드만 할 수 있다.
+  // 지금은 No.01 배추와 No.10 고구마뿐이고, 나머지 열 장은 누끼 원화가 없다.
+  const fit = card.scene?.subject && card.scene?.fit ? card.scene.fit : null;
+  if (fit) {
+    stage.dataset.pop = "1";
+    stage.style.setProperty("--fx", fit.x);
+    stage.style.setProperty("--fy", fit.y);
+    stage.style.setProperty("--fw", fit.w);
+    stage.style.setProperty("--fh", fit.h);
+  }
+
   stage.innerHTML = `
-    ${shell}
-      <img class="art" width="${card.w}" height="${card.h}" decoding="async"${lazy ? ' loading="lazy"' : ""}>
-      <span class="foil holo-card__shine" aria-hidden="true"></span>
-      <span class="glare holo-card__glare" aria-hidden="true"></span>
-      <span class="grain" aria-hidden="true"></span>
-      <span class="edge" aria-hidden="true"></span>
-    ${button ? "</button>" : "</div>"}`;
+    <div class="spin"><div class="tilt">
+      ${shell}
+        <img class="art" width="${card.w}" height="${card.h}" decoding="async"${lazy ? ' loading="lazy"' : ""}>
+        <span class="foil holo-card__shine" aria-hidden="true"></span>
+        <span class="glare holo-card__glare" aria-hidden="true"></span>
+        <span class="grain" aria-hidden="true"></span>
+        <span class="edge" aria-hidden="true"></span>
+      ${button ? "</button>" : "</div>"}
+      ${fit ? `<img class="hero" src="${card.scene.subject}" alt="" aria-hidden="true" decoding="async">` : ""}
+    </div></div>`;
 
   const img = stage.querySelector(".art");
   img.src = card.art;
@@ -381,7 +396,17 @@ CARDS.forEach((card, i) => {
     `<span class="name">${esc(card.name)}</span>` +
     `<span class="stat">${esc(statText(card))}</span>`;
 
-  stage.querySelector(".card").addEventListener("click", () => open(i));
+  // 누르고 있던 시간을 재 둔다. 꾹 누르다 만 것(게이지를 못 채우고 뗀 것)까지
+  // 720° 를 돌려 버리면, 이머시브를 노렸던 사람에게는 "엉뚱한 게 나왔다" 가 된다.
+  // 빠르게 탭한 것만 돌린다.
+  const cardEl = stage.querySelector(".card");
+  let pressAt = 0;
+  cardEl.addEventListener("pointerdown", () => { pressAt = performance.now(); });
+  cardEl.addEventListener("click", (e) => {
+    const held = pressAt ? performance.now() - pressAt : 0;
+    pressAt = 0;
+    spinThenOpen(stage, i, e, held);
+  });
 
   // ☆☆☆ 는 꾹 눌러 안으로 들어간다. 게이지가 다 차기 전에 떼면 위의 click 이 살아서
   // 평범한 확대 뷰가 열린다 — 기존 동작은 그대로 남는다.
@@ -487,6 +512,11 @@ function render() {
   const inner = document.createElement("div");
   inner.className = "viewer-inner";
   inner.append(makeStage(card, { lazy: false, button: false }));
+
+  // 확대 뷰에서 카드를 누르면 주인공이 프레임 밖으로 튀어나온다. 누끼가 있는
+  // 카드만 (지금은 No.01 · No.10). render() 가 매번 새로 그리므로 상태는 안 남는다.
+  const popStage = inner.querySelector('.stage[data-pop="1"]');
+  if (popStage) popStage.querySelector(".card").addEventListener("click", () => pop(popStage));
   inner.insertAdjacentHTML("beforeend", detailMarkup(card));
   inner.insertAdjacentHTML("beforeend",
     '<button type="button" class="viewer-close" data-close aria-label="닫기">✕</button>' +
@@ -494,6 +524,51 @@ function render() {
     '<button type="button" class="edge-nav next" data-nav="1" aria-label="다음 카드">›</button>' +
     '<p class="sheet-hint">탭하여 상세보기</p>');
   viewer.append(inner);
+}
+
+/* ── 누끼 팝아웃 ───────────────────────────────────────────
+   얼마나 올릴지를 **그때그때 잰다.** 비율로 박아 두면 안 된다 — 확대 뷰의 카드는
+   창 비율을 따라 커져서, 어떤 창에서는 카드가 화면보다 크다(위가 이미 잘려 있다).
+   같은 -28% 가 넓은 창에서는 프레임을 시원하게 넘고 낮은 창에서는 누끼를 화면
+   밖으로 밀어낸다. 그래서 "카드 위로 이만큼 넘되, 화면 위로는 안 나간다" 로 푼다.
+
+   --lift(translateZ)와 --grow 는 아래에서 위로 키우므로 그만큼 위쪽을 더 먹는다.
+   원근(1150px)까지 쳐서 미리 빼 두지 않으면 계산한 자리보다 더 올라간다. */
+
+const POP = { margin: 14, overhang: .16, maxOverhang: 90, lift: 74, grow: 1.06, perspective: 1150 };
+
+function pop(stage) {
+  const hero = stage.querySelector(".hero");
+  if (!hero) return;
+
+  if (stage.classList.contains("is-popped")) {
+    stage.classList.remove("is-popped");
+    for (const v of ["--lift", "--grow", "--rise"]) hero.style.removeProperty(v);
+    return;
+  }
+
+  // 쉴 때(변형 없는) 자리에서 잰다. 붙이고 나서 재면 스스로를 보고 계산하게 된다.
+  const h = hero.getBoundingClientRect();
+  const c = stage.querySelector(".card").getBoundingClientRect();
+
+  // 떠오르면서 커지는 만큼은 전부 위로 간다 (transform-origin 이 아래라서)
+  const mag = POP.perspective / (POP.perspective - POP.lift);
+  const growsUp = (POP.grow * mag - 1) * h.height;
+
+  const wantTop = Math.max(POP.margin, c.top - Math.min(c.height * POP.overhang, POP.maxOverhang));
+  const wantRise = Math.max(0, h.top - wantTop);
+
+  // 위로 쓸 수 있는 거리. 확대 뷰의 카드가 창보다 커서 위가 이미 잘려 있으면 0 에 가깝다.
+  // 그럴 때는 rise 만 깎아선 모자라다 — lift 와 grow 도 같이 줄여야 화면 안에 남는다.
+  // 아예 못 올릴 상황이면 k=0 이 되어 제자리에서 나타나기만 한다 (잘리는 것보다 낫다).
+  const avail = h.top - POP.margin;
+  const need = wantRise + growsUp;
+  const k = need > 0 ? Math.max(0, Math.min(1, avail / need)) : 1;
+
+  hero.style.setProperty("--lift", `${(POP.lift * k).toFixed(1)}px`);
+  hero.style.setProperty("--grow", (1 + (POP.grow - 1) * k).toFixed(3));
+  hero.style.setProperty("--rise", `${(-wantRise * k).toFixed(1)}px`);
+  stage.classList.add("is-popped");
 }
 
 /* ── 그리드 슬롯 ↔ 가운데 날아가기 (FLIP) ──────────────────
@@ -528,6 +603,54 @@ function flightKeyframes(fromRect, toRect) {
     { transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
     { transform: "translate(0px, 0px) scale(1)" },
   ];
+}
+
+/* ── 클릭하면 한참 돌고 나서 확대 뷰로 ─────────────────────
+   꾹 누르기(이머시브)와 갈린다: 게이지가 다 차면 immersive.mjs 의 swallow 가
+   그 다음 click 을 document 캡처 단계에서 삼키므로 여기까지 오지 않는다.
+   중간에 떼면 click 이 살아서 이 길로 온다.
+
+   회전은 .spin 에만 건다. 기울기는 .tilt, FLIP 은 .stage 라 셋이 안 겹친다.
+   720° 는 0° 와 같은 그림이라 끝나고 나서 재는 .stage 의 자리가 그대로다 —
+   FLIP 이 시작 위치를 잘못 잡지 않으려면 **다 돌고 나서** open() 을 불러야 한다.
+   도는 중에 재면 화면에 비친 상자가 납작해져 있다. */
+
+const SPIN = { turn: 720, duration: 560, easing: "cubic-bezier(.28,.9,.3,1)" };
+/** 이보다 오래 눌렀다 뗐으면 회전을 건너뛴다. 꾹 누르기(520ms)를 노리다 만 손이다. */
+SPIN.tapMax = 300;
+
+function spinThenOpen(stage, i, e, held = 0) {
+  const spin = stage.querySelector(".spin");
+  if (reducedMotion || !spin) return open(i);
+  if (held > SPIN.tapMax) return open(i);   // 꾹 누르다 만 것 — 조용히 확대 뷰만 연다
+  if (stage.classList.contains("is-spinning")) return;   // 연타로 각도가 겹치지 않게
+
+  // 누른 쪽으로 돈다. 오른쪽을 누르면 오른쪽 모서리가 뒤로 넘어간다.
+  const r = stage.getBoundingClientRect();
+  const dir = e && e.clientX < r.left + r.width / 2 ? -1 : 1;
+  const to = dir * SPIN.turn;
+
+  stage.classList.add("is-spinning");
+  const anim = spin.animate([
+    { transform: "rotateY(0deg) scale(1)", filter: "blur(0px)", offset: 0 },
+    { transform: `rotateY(${to * .18}deg) scale(.93)`, filter: "blur(1.4px)", offset: .18 },
+    { transform: `rotateY(${to * .74}deg) scale(.95)`, filter: "blur(1.1px)", offset: .74 },
+    { transform: `rotateY(${to + dir * 14}deg) scale(1.03)`, filter: "blur(0px)", offset: .9 },
+    { transform: `rotateY(${to}deg) scale(1)`, filter: "blur(0px)", offset: 1 },
+  ], SPIN);
+
+  // **finished 만 믿으면 안 된다.** 배경 탭에서는 애니메이션 타임라인이 멈춰서
+  // 회전이 시작값에 고정되고 finished 가 영영 안 온다 — 그러면 누른 클릭이 통째로
+  // 사라진다. 숨은 탭에서도 도는 setTimeout 으로 받쳐 둔다 (slide 쪽과 같은 이유).
+  let fired = false;
+  const done = () => {
+    if (fired) return;
+    fired = true;
+    stage.classList.remove("is-spinning");
+    open(i);
+  };
+  anim.finished.then(done).catch(done);
+  setTimeout(done, SPIN.duration + 250);
 }
 
 function open(i) {
@@ -648,6 +771,8 @@ function afterClose() {
   flight = null;
   clearTimeout(navPeekTimer);
   viewer.classList.remove("is-closing", "is-opening", "show-detail", "show-nav");
+  // 팝아웃한 채로 닫으면 다음에 열 때도 튀어나온 상태로 시작한다
+  viewer.querySelector(".stage")?.classList.remove("is-popped");
   document.body.classList.remove("is-viewing");
   showGridStage(index, true);
   // 넘겨 봤다면 처음 연 카드가 아니라 마지막으로 보던 카드로 돌아간다
@@ -798,6 +923,11 @@ viewer.addEventListener("pointerup", (e) => {
       : 0;
 
     if (edge) return go(edge);   // go 가 알아서 buttons 를 다시 띄운다
+
+    // 카드 위의 탭은 팝아웃이 가져간다 (render 가 건 click 리스너). 여기서 설명까지
+    // 토글하면 한 번 눌렀는데 둘 다 일어난다. 카드 바깥을 탭하면 그대로 설명이 열린다.
+    if (viewer.querySelector('.stage[data-pop="1"]') && e.target.closest(".card")) return;
+
     viewer.classList.toggle("show-detail");
   }
   peekNav();   // 설명을 열었다면 peekNav 가 알아서 안 띄운다
