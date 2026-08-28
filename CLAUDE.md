@@ -51,6 +51,12 @@ py -m http.server 5173     # 또는 npx serve .  — 빌드도 install 도 없�
 - **DAENGS 본체로 돌아가는 링크는 절대 URL 이어야 합니다.** 원본에서는 `index.html` 의
   `<a class="back" href="/">← DAENGS</a>` 였는데, 이 저장소에서 `/` 는 **도감 자기 자신**입니다.
   이 저장소에서 유일하게 절대 URL 이 허용되는 자리입니다.
+  ⚠️ **그 주소가 `http://daengs.weareithero.cloud/` 인 것은 의도입니다.** 본체는 nginx `:80`
+  평문이라 TLS 가 없습니다. 도감은 HTTPS 인데 링크만 http 라 "고쳐야 할 것"처럼 보이지만,
+  `https://` 로 바꾸면 **연결 자체가 안 됩니다.** 링크 이동(top-level navigation)은 mixed
+  content 차단 대상이 아니라 그대로 동작합니다 — 막히는 건 스크립트·스타일·이미지 같은
+  하위 리소스입니다. 다만 크롬은 http 주소를 **자동으로 https 로 한 번 시도했다가 실패 후
+  되돌아오므로** 이동이 살짝 느립니다. 본체에 TLS 가 붙는 날 같이 바꾸세요.
 - **`vendor/cards-css/` 는 업스트림 원본입니다.** 세기를 조절하고 싶으면 그 파일이 아니라
   `rarity.css` 의 '다리' 블록에서 하세요. 원본을 고치면 버전을 올릴 때 조용히 되돌아갑니다.
   `LICENSE` 를 같은 폴더에서 빼지 마세요 — MIT 의 조건입니다.
