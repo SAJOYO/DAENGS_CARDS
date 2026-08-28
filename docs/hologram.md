@@ -34,6 +34,7 @@ py -m http.server 5173     # 저장소 루트에서. 또는 npx serve .
 | `studio.html` / `.css` / `.mjs` | 홀로 스튜디오. 올린 이미지에 포일 12종을 입혀 봅니다 (아래 참고) |
 | `tilt-engine.js` | 스튜디오와 **내보낸 HTML** 이 같이 쓰는 기울기(포인터·키보드·자이로). 모듈이 아닙니다 |
 | `immersive.css` / `.mjs` | No.01 전용. 꾹 누르면 카드 안으로 들어가는 별개의 뷰 |
+| `audio/` | 이머시브 배경음. `cards.mjs` 의 `scene.audio` 가 가리킵니다 |
 | `vendor/cards-css/` | `@kongyo2/cards-css` 0.5.0 (MIT) 의 포일 CSS. **원본 그대로** |
 | `art/` | 카드 그림 (webp). **원본 PNG 는 이 저장소에 없습니다** — `DAENGS_dev` 의 `tools/art-src/` |
 

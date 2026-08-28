@@ -20,6 +20,7 @@ main 브랜치 (root)  →  GitHub Pages  →  https://cards.weareithero.cloud/
 | `tilt-engine.js` | 기울기 입력(포인터 · 키보드 · 자이로). 모듈이 아닙니다 |
 | `vendor/cards-css/` | 남의 MIT 라이브러리. **원본 그대로, 손대지 않습니다** |
 | `art/` | 카드 그림 webp. 원본 PNG 는 여기 없습니다 |
+| `audio/` | 이머시브 배경음 mp3. **여기 있는 것이 원본의 전부입니다** |
 | `.nojekyll` | Pages 의 Jekyll 처리를 끕니다 |
 | `CNAME` | 커스텀 도메인(`cards.weareithero.cloud`)의 **정본**. 지우면 도메인이 풀립니다 |
 | `docs/decisions.md` | 이 저장소의 의사결정 기록 (`CARDS-001 ~`) |
