@@ -585,28 +585,47 @@
 }
 
 /* 이 둘은 .dio 의 직계 자식이라 화면 기준으로 붙는다 (레이어 안이 아니다) */
-.dio-exit,
+.dio-tools,
 .dio-tip {
   position: absolute;
   z-index: 2;
 }
 
-.dio-exit {
+/* 버튼이 둘(음소거 · 닫기)이 되면서 각자 right 를 박는 대신 한 줄로 묶었다.
+   자리 값은 예전 .dio-exit 이 갖고 있던 것 그대로다.
+   .dio-layer 가 아니므로 진입·퇴장 연출(dio-out)은 이 바를 건드리지 않는다. */
+.dio-tools {
   top: clamp(16px, 3vh, 30px);
   right: clamp(16px, 4vw, 34px);
+  display: flex;
+  gap: 8px;
+}
+
+.dio-exit,
+.dio-mute {
   padding: 8px 15px;
   border: 1px solid rgba(255, 255, 255, .22);
   border-radius: 999px;
   color: var(--ink);
   background: rgba(0, 0, 0, .42);
   font-size: 12px;
+  /* 라벨이 "소리" ↔ "음소거" 로 길이가 바뀐다. 줄바꿈되면 알약이 두 줄이 된다 */
+  white-space: nowrap;
   cursor: pointer;
   transition: border-color .18s ease, background-color .18s ease;
 }
 
 .dio-exit:hover,
-.dio-exit:focus-visible {
+.dio-exit:focus-visible,
+.dio-mute:hover,
+.dio-mute:focus-visible {
   border-color: rgba(255, 255, 255, .5);
+  background: rgba(0, 0, 0, .62);
+}
+
+/* 음소거된 동안은 눌린 상태로 보이게 — 아이콘만으로는 지금 켜진 건지 꺼진 건지 애매하다 */
+.dio-mute[aria-pressed="true"] {
+  color: var(--ink-dim);
   background: rgba(0, 0, 0, .62);
 }
 

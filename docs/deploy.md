@@ -112,7 +112,7 @@ Let's Encrypt 를 자동 발급·자동 갱신합니다. `.cloud` TLD 도 문제
 `gh api repos/SAJOYO/DAENGS_CARDS/pages --jq .protected_domain_state` → `verified`.
 
 > 🚫 **apex(`weareithero.cloud`)는 검증하지 않습니다. 이 도메인은 여러 팀(여러 org)이
-> 나눠 씁니다** — 자세한 이유는 [`CARDS-006`](decisions.md#cards-006).
+> 나눠 씁니다** — 자세한 이유는 [`CARDS-007`](decisions.md#cards-007).
 > **쓰는 서브도메인을 각각 검증합니다.**
 
 순서가 **깃허브 → 가비아 → 깃허브** 로 한 번 왕복합니다. 깃허브가 토큰을 먼저 만들어야

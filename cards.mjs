@@ -81,6 +81,9 @@ export const CARDS = [
     rarity: "immersive",
     scene: {
       place: "이슬 맺힌 텃밭 · 해 뜨기 직전",
+      // 이머시브 배경음. 30초짜리를 계속 반복하고 닫으면 멈춘다.
+      // 이 줄이 없는 카드는 무음으로 돌고 음소거 버튼도 안 생긴다.
+      audio: "audio/tiptoe-through-clover.mp3",
       back: "art/cabbage-back.webp",
       subject: "art/cabbage-subject.webp",
       // 진입 때만 쓰는 카드 그림. art/cabbage.webp 와 같은데 둥근 모서리 바깥의
