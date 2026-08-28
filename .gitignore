@@ -1,0 +1,21 @@
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 에디터
+.vscode/
+.idea/
+
+# 로컬 정적 서버 · 실험물
+.cache/
+*.log
+
+# 원본 아트(PNG)는 이 저장소에 두지 않습니다 — art/ 의 webp 만 커밋합니다.
+# 원본은 DAENGS_dev 의 tools/art-src/, webp 변환기는 choiyc05/gohome 에 있습니다.
+art-src/
+*.psd
+
+# node_modules 를 쓸 일은 없지만, npx serve 등을 돌리다 생기면 커밋되지 않게.
+node_modules/
+package-lock.json
