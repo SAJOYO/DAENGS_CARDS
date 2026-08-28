@@ -264,19 +264,32 @@ window.__neoTilt = feedOrientation;
 
 /* 브라우저 자이로 붙이기. iOS 13+ 는 사용자 제스처 안에서 권한을 물어야 해서, 첫
    탭까지 기다렸다가 붙인다. 안드로이드는 물을 게 없어서 바로 붙는다.
-   권한을 거절해도 아무 일도 안 일어난다 — 포인터가 그대로 남는다. */
+   권한을 거절해도 아무 일도 안 일어난다 — 포인터가 그대로 남는다.
+
+   ⚠️ **`pointerdown` 으로 물으면 iOS 에서 팝업이 아예 안 뜬다.** 명세상 활성화를 만드는
+   이벤트 중 `pointerdown` 은 `pointerType === "mouse"` 일 때만 해당한다. 손가락이면
+   `pointerup` / `touchend` / `click` 이라야 활성화가 생기고, 아니면 requestPermission() 이
+   NotAllowedError 로 즉시 거부된다. `click` 은 터치에서 touchend 뒤에 뜨고 마우스에서도
+   그대로 와서 한 줄로 양쪽을 덮는다.
+
+   리스너는 **허가가 떨어졌을 때만** 뗀다. 실패했는데 떼면 그 세션 내내 죽는다 —
+   원인이 무엇이든 다음 탭에서 한 번 더 물어볼 수 있어야 한다. */
 function startDeviceOrientation() {
   window.addEventListener("deviceorientation", (e) => feedOrientation(e.beta, e.gamma));
 }
 
 if (!reducedMotion && typeof DeviceOrientationEvent !== "undefined") {
   if (typeof DeviceOrientationEvent.requestPermission === "function") {
-    document.addEventListener("pointerdown", function ask() {
-      document.removeEventListener("pointerdown", ask);
+    document.addEventListener("click", function ask() {
       DeviceOrientationEvent.requestPermission()
-        .then((r) => { if (r === "granted") startDeviceOrientation(); })
-        .catch(() => {});
-    }, { once: true });
+        .then((r) => {
+          if (r !== "granted") return;   // 거부 — 리스너를 남겨 다음 탭에 다시 묻는다
+          document.removeEventListener("click", ask);
+          startDeviceOrientation();
+        })
+        // 삼키면 안 된다. 이 경고가 없어서 iOS 가 왜 안 되는지 한참 못 찾았다.
+        .catch((e) => console.warn("[neo] 자이로 권한 실패:", e && e.name));
+    });
   } else {
     startDeviceOrientation();
   }
