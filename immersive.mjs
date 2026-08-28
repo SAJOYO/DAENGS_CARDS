@@ -116,6 +116,131 @@ function stopGyro() {
   gyroBase = null;
 }
 
+/* ── 소리 ──────────────────────────────────────────────────
+   장면에 배경음을 깐다 (scene.audio). 30초짜리를 계속 반복하고, 이머시브를 닫을 때만
+   멈춘다. scene.audio 가 없는 카드는 지금처럼 무음으로 돌고, 음소거 버튼도 안 생긴다.
+
+   **자동재생 정책**: play() 는 사용자 제스처 없이는 거부된다. 이머시브는 꾹 누르기(520ms)
+   나 ★★★ 배지 클릭에서만 열리므로 보통은 제스처 안이라 통과한다. 그래도 거부되는 자리가
+   남아 있다 — 주소에 ?im= 을 붙여 새로고침하는 개발 경로(autoOpenFromQuery)와 iOS 무음
+   스위치다. 거부되면 조용히 음소거 표시로 두고 장면은 그대로 띄운다 — 그 다음 버튼을 한 번
+   누르면 이번엔 확실한 제스처라 소리가 난다. play() 가 돌려주는 Promise 를 안 받으면
+   콘솔에 uncaught rejection 이 남으므로, 모든 play() 에 catch 가 붙어 있다.
+
+   **요소를 재사용한다**: 열 때마다 new Audio() 를 만들면 개발 서버의 no-store 와 겹쳐
+   매번 다시 받는다. 그림(scenePreload)을 blob 으로 쥐는 것과 같은 이유인데, 오디오는
+   range 요청으로 흘러오므로 요소 하나만 들고 있으면 충분하다. */
+
+/** 배경음의 최대 볼륨. 배경음이지 주인공이 아니라 1.0 을 다 쓰지 않는다. */
+const AUDIO_VOL = .75;
+
+const FADE_IN_MS = 900;    // 진입 연출이 2160ms 라, 틀이 녹는 동안 소리가 스며든다
+const FADE_OUT_MS = 300;   // 퇴장 연출이 400ms. 소리가 화면보다 먼저 끊기면 안 된다
+
+let audioEl = null;
+let muted = false;         // 기억하지 않는다 — finish() 에서 false 로 되돌린다
+let fadeRaf = 0;
+let onHide = null;         // 열려 있는 동안만 붙는 visibilitychange 핸들러
+
+/** 여러 번 불러도 안전하다. 곡이 바뀌면 주소만 갈아 끼운다. */
+function ensureAudio(src) {
+  if (!src) return null;
+  if (!audioEl) {
+    audioEl = new Audio();
+    // mp3 는 인코더 패딩 때문에 이음매에 수십 ms 의 공백이 생길 수 있다. 잔잔한
+    // 배경음이라 감수한다 — 없애려면 오디오 두 개를 크로스페이드해야 한다.
+    audioEl.loop = true;
+    audioEl.preload = "auto";
+  }
+  // src 프로퍼티는 읽을 때 절대 URL 로 바뀌어서 원래 값과 비교할 수 없다
+  if (audioEl.dataset.src !== src) {
+    audioEl.dataset.src = src;
+    audioEl.src = src;
+  }
+  return audioEl;
+}
+
+/** 볼륨을 to 까지 ms 에 걸쳐 옮긴다. 다 되면 done(). */
+function fadeTo(to, ms, done) {
+  cancelAnimationFrame(fadeRaf);
+  fadeRaf = 0;
+  const el = audioEl;
+  if (!el) return;
+  // reducedMotion 이면 진입 연출 자체가 없어서 장면이 즉시 뜬다. 거기에 900ms 짜리
+  // 페이드를 붙이면 소리만 뒤늦게 따라온다.
+  if (reducedMotion || !ms) {
+    el.volume = to;
+    done?.();
+    return;
+  }
+  const from = el.volume;
+  const t0 = performance.now();
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / ms);
+    el.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+    if (k < 1) {
+      fadeRaf = requestAnimationFrame(step);
+    } else {
+      fadeRaf = 0;
+      done?.();
+    }
+  };
+  fadeRaf = requestAnimationFrame(step);
+}
+
+function startAudio(card) {
+  const el = ensureAudio(card.scene?.audio);
+  if (!el) return;
+  el.muted = muted;
+  el.currentTime = 0;
+  el.volume = 0;
+  el.play().then(
+    () => fadeTo(AUDIO_VOL, FADE_IN_MS),
+    () => {
+      // 거부당했다. 음소거로 표시해 두면 버튼 한 번으로 살아난다 (toggleMute 참고).
+      muted = true;
+      el.muted = true;
+      el.volume = AUDIO_VOL;
+      syncMuteButton();
+    });
+}
+
+function stopAudio() {
+  if (!audioEl) return;
+  fadeTo(0, FADE_OUT_MS, () => audioEl?.pause());
+}
+
+/** 마지막 방어선. finish() 가 여러 번 불려도 안전해야 한다. */
+function resetAudio() {
+  cancelAnimationFrame(fadeRaf);
+  fadeRaf = 0;
+  muted = false;
+  if (!audioEl) return;
+  audioEl.pause();
+  audioEl.muted = false;
+  audioEl.currentTime = 0;
+}
+
+/** 버튼의 겉모습을 muted 에 맞춰 둔다. 버튼이 없는 카드면 아무것도 안 한다. */
+function syncMuteButton() {
+  const btn = dio?.querySelector(".dio-mute");
+  if (!btn) return;
+  btn.setAttribute("aria-pressed", String(muted));
+  btn.setAttribute("aria-label", muted ? "소리 켜기" : "소리 끄기");
+  btn.textContent = muted ? "🔇 음소거" : "🔊 소리";
+}
+
+function toggleMute() {
+  muted = !muted;
+  if (audioEl) {
+    audioEl.muted = muted;
+    // 자동재생이 거부됐거나 탭 전환으로 멈춰 있으면 여기서 다시 시작한다.
+    // 버튼 클릭은 확실한 사용자 제스처라 이번엔 통과한다.
+    if (!muted && audioEl.paused) audioEl.play().catch(() => {});
+  }
+  syncMuteButton();
+}
+
 /* ── 장면 조립 ─────────────────────────────────────────── */
 
 /* ── 장면 에셋 선로딩 ───────────────────────────────────────
@@ -163,6 +288,10 @@ const sceneUrls = (card) => {
 
 /** 여러 번 불러도 안전하다. 이미 받았거나 받는 중이면 그냥 넘어간다. */
 export function preloadScene(card) {
+  // 오디오도 여기서 미리 받는다. 그림처럼 blob 으로 붙잡지는 않는다 — range 요청으로
+  // 흘러오므로 요소 하나만 들고 있으면 두 번 받지 않는다.
+  ensureAudio(card?.scene?.audio);
+
   for (const u of sceneUrls(card)) {
     if (scenePreload.has(u)) continue;
     scenePreload.set(u, null);
@@ -236,7 +365,10 @@ function build(card) {
       <div class="dio-layer dio-fore" style="--i:6"><div class="dio-move"></div></div>
       <div class="dio-layer dio-dew" style="--i:7"><div class="dio-move"></div></div>
     </div>
-    <button type="button" class="dio-exit">닫기 (Esc)</button>
+    <div class="dio-tools">
+      ${scene.audio ? `<button type="button" class="dio-mute" aria-pressed="false" aria-label="소리 끄기">🔊 소리</button>` : ""}
+      <button type="button" class="dio-exit">닫기 (Esc)</button>
+    </div>
     <p class="dio-tip">기울이거나 끌어서 둘러보세요</p>`;
 
   // 먼지 — 카드 뒤에서 느리게 떠다닌다
@@ -547,6 +679,18 @@ export function openImmersive(card, fromRect) {
 
   bindScene(dio);
   startGyro();
+  startAudio(card);
+
+  // 탭을 옮기거나 창을 내리면 멈추고, 돌아오면 이어서 튼다. 이머시브를 열어 둔 채
+  // 다른 탭에서 일하는데 어디선가 음악이 계속 나오는 상황을 막는다.
+  // reflow 와 같이 **열려 있는 동안만** 붙여 두고 finish() 에서 뗀다.
+  onHide = () => {
+    if (!audioEl) return;
+    if (document.hidden) audioEl.pause();
+    else audioEl.play().catch(() => {});
+  };
+  document.addEventListener("visibilitychange", onHide);
+
   dialog.querySelector(".dio-exit")?.focus();
 }
 
@@ -565,6 +709,11 @@ function finish() {
     removeEventListener("resize", reflow);
     reflow = null;
   }
+  if (onHide) {
+    document.removeEventListener("visibilitychange", onHide);
+    onHide = null;
+  }
+  resetAudio();
   dialog.classList.remove("is-entering", "is-leaving");
   if (dialog.open) dialog.close();
   dialog.replaceChildren();
@@ -577,6 +726,7 @@ export function closeImmersive() {
   if (closing) return;
 
   stopGyro();
+  stopAudio();
   cancelAnimationFrame(raf);
   raf = 0;
 
@@ -624,6 +774,7 @@ function bindScene(el) {
 }
 
 dialog?.addEventListener("click", (e) => {
+  if (e.target.closest(".dio-mute")) return toggleMute();
   if (e.target.closest(".dio-exit")) closeImmersive();
 });
 
