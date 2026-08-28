@@ -4,7 +4,7 @@
 ([CARDS-003](decisions.md#cards-003)).
 
 ```
-main 브랜치의 / (root)  →  GitHub Pages  →  https://sajoyo.github.io/DAENGS_CARDS/
+main 브랜치의 / (root)  →  GitHub Pages  →  https://cards.weareithero.cloud/
 ```
 
 **`main` 에 머지되는 순간 배포됩니다.** 반영까지 보통 1분 안쪽이고, Actions 탭의
@@ -48,7 +48,7 @@ gh api repos/SAJOYO/DAENGS_CARDS/pages --jq '"\(.status) \(.html_url)"'
 
 ---
 
-## 2단계 — 커스텀 도메인 `cards.weareithero.cloud`
+## 2단계 — 커스텀 도메인 `cards.weareithero.cloud` ✅ 완료 (2026-08-28)
 
 도메인은 **가비아**에서 샀고 네임서버도 가비아입니다 (`ns.gabia.co.kr` · `ns.gabia.net` ·
 `ns1.gabia.co.kr`). 그래서 DNS 는 **My가비아 → 서비스관리 → 도메인 → DNS 정보 → DNS 관리**

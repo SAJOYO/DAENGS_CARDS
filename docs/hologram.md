@@ -3,7 +3,7 @@
 강아지 네오가 채소가 된 트레이딩 카드 12장을, 포켓몬 카드 게임 포켓처럼 기울이고
 반짝이게 만든 데모입니다.
 
-배포: <https://sajoyo.github.io/DAENGS_CARDS/>
+배포: <https://cards.weareithero.cloud/>
 
 ```powershell
 py -m http.server 5173     # 저장소 루트에서. 또는 npx serve .
@@ -547,7 +547,7 @@ NeoTilt.gyro({ onLive: () => { … } });   // 첫 값이 실제로 들어왔을 
 | `https://…` (`npm run dev:https`, 3000) | ✅ |
 | `http://localhost:5173` · `127.0.0.1` | ✅ (평문이라도 크롬이 secure 로 침) |
 | `http://<LAN_IP>:3000` ← 폰에서 이게 함정입니다 | ❌ |
-| 배포된 Pages 주소 (`sajoyo.github.io/DAENGS_CARDS/`) | ✅ HTTPS 입니다 (`CARDS-001` 로 이렇게 됐습니다) |
+| 배포된 주소 (`cards.weareithero.cloud`) | ✅ HTTPS 입니다 (`CARDS-001` · `CARDS-005`) |
 | 내보낸 HTML 을 PC 에서 `file://` 로 열기 | ✅ 크롬·파이어폭스는 `file://` 을 secure 로 칩니다 |
 | 내보낸 HTML 을 안드로이드 다운로드에서 열기 | ❌ `content://` 라 secure 가 아닙니다 |
 | iOS 사파리 | 권한을 물어야 합니다 — 첫 탭에서 `requestPermission()` 을 부릅니다 |
