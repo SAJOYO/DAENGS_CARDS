@@ -222,13 +222,20 @@
       addEventListener("deviceorientation", function (e) { feed(e.beta, e.gamma); });
     }
 
+    // ⚠️ `pointerdown` 으로 물으면 iOS 에서 팝업이 안 뜬다 — 터치에서는 활성화를
+    // 만들지 않는 이벤트다. `click` 이라야 한다. 허가가 떨어졌을 때만 리스너를 뗀다.
+    // (main.js 에 같은 코드가 있다. 이 파일은 스튜디오와 **내보낸 HTML 한 장**이
+    //  같이 쓰는 독립 파일이라 자족해야 해서, 합치지 않고 한 벌씩 고친다.)
     if (typeof DeviceOrientationEvent.requestPermission === "function") {
-      document.addEventListener("pointerdown", function ask() {
-        document.removeEventListener("pointerdown", ask);
+      document.addEventListener("click", function ask() {
         DeviceOrientationEvent.requestPermission()
-          .then(function (r) { if (r === "granted") listen(); })
-          .catch(function () {});
-      }, { once: true });
+          .then(function (r) {
+            if (r !== "granted") return;   // 거부 — 다음 탭에 다시 묻는다
+            document.removeEventListener("click", ask);
+            listen();
+          })
+          .catch(function (e) { console.warn("[neo] 자이로 권한 실패:", e && e.name); });
+      });
     } else {
       listen();
     }
