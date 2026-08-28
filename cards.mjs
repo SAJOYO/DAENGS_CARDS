@@ -16,7 +16,7 @@
 //       빌렸는데, "위로 갈수록 더 반짝이게"가 아니라 카드마다 서로 다른 렌더링 기법을
 //       쓰도록 나눴다. 기법이 겹치면 시험할 게 없어지기 때문이다.
 //
-//       **No.01 만 우리가 짠 것이고, 나머지 열 장은 @kongyo2/cards-css 의 포일이다.**
+//       **No.01 과 No.10 만 우리가 짠 것이고, 나머지 열 장은 @kongyo2/cards-css 의 포일이다.**
 //       그래서 여기 이름은 우리가 지은 게 아니라 그쪽 포일 이름 그대로이고, 그대로
 //       DOM 의 data-effect 값이 된다 — 바꾸려면 vendor/cards-css/ 에 그 이름의 파일이
 //       있어야 하고 index.html 에 링크도 있어야 한다. 목록은 CARDS_CSS_EFFECTS.
@@ -30,7 +30,7 @@
 //         07 holo       무지개 밴드 + 세로 스캔라인 (제일 고전적인 홀로)
 //         08 reverse    가운데를 죽이고 가장자리를 살리는 역전 폴오프
 //         09 aurora     넓고 부드러운 색 띠
-//         10 cosmos     성운 결
+//         10 immersive  꾹 누르면 카드 안으로 들어간다 (배경은 보랏빛 결계 — 우리 것)
 //         11 mosaic     격자로 잘린 타일. 유일하게 무늬가 기하학이다
 //         12 metal      세로로 긁힌 브러시드 결. 색상환을 안 돌고 명도만 오르내린다
 //
@@ -353,7 +353,36 @@ export const CARDS = [
     art: "art/sweet-potato.webp",
     w: 816,
     h: 1125,
-    rarity: "cosmos",
+    rarity: "immersive",
+    scene: {
+      place: "보랏빛 결계 · 의식이 시작되기 직전",
+      // ⚠️ **임시**: 배추 곡을 그대로 물려 놨다. 배선(반복 재생 · 페이드 · 음소거 버튼)을
+      //    확인하려고 넣은 것이고, 밝은 클로버 곡이라 이 장면과는 안 맞는다.
+      //    고구마 곡이 오면 audio/ 에 넣고 이 줄만 갈면 된다.
+      audio: "audio/tiptoe-through-clover.mp3",
+      back: "art/sweet-potato-back.webp",
+      subject: "art/sweet-potato-subject.webp",
+      card: "art/sweet-potato-card.webp",
+      // ⚠️ 임시다. 고구마용 틀이 아직 없어서 **배추 틀을 그대로 복사해 뒀다**
+      //    (art/cabbage-card-frame.webp 와 같은 파일, 875x1216). 그래서 창이 녹으면
+      //    배추 카드의 인쇄 문구가 드러난다. 아래 window 도 그 틀에서 잰 배추 값이다.
+      //    고구마 틀이 오면 둘을 같이 갈아야 한다.
+      frame: "art/sweet-potato-card-frame.webp",
+      window: { x: 4.91, y: 10.28, w: 90.51, h: 81.58 },
+      // 누끼가 카드 그림과 **다른 렌더**라 배추처럼 픽셀로 맞출 수가 없다. 그래서
+      // 세로 자리는 배추 값을 그대로 쓰고, 가로 폭만 이 누끼의 비율(0.9234)에 맞춰
+      // 다시 냈다 — 이렇게 해야 --card-x 의 가운데 정렬이 어긋나지 않는다.
+      fit: { x: 9.86, y: 14.15, w: 79.82, h: 62.70 },
+      motes: 52,
+      leaves: 0,      // 텃밭이 아니라 결계다. 잎이 날리면 장면과 안 맞는다
+      dew: 15,
+      dewRun: 3,
+      skinDew: 11,
+      shells: [
+        { z: 34, r0: 14, r1: 44, r2: 54, r3: 86, shadow: .22 },
+        { z: 70, r0: 44, r1: 62, r2: 62, r3: 72 },
+      ],
+    },
     accent: "#a0656f",
     accent2: "#d8a89e",
     frame: "leaf",
