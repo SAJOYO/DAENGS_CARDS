@@ -737,6 +737,12 @@ export function closeImmersive() {
   if (!dialog?.open) return;
   if (closing) return;
 
+  // 꾹이 완성되면 그 다음 click 하나를 삼키려고 swallow 를 세워 두는데, 손을 뗀 자리가
+  // 이미 이 dialog 위라서 click 이 카드에서 안 나는 경우가 있다. 그러면 swallow 가
+  // 1500ms 동안 남아 있다가 **닫은 뒤에 누른 다른 카드의 click 을 대신 먹는다** —
+  // 눌리다 말다 하는 것처럼 보인다. 닫을 때 확실히 내린다.
+  swallow = 0;
+
   stopGyro();
   stopAudio();
   cancelAnimationFrame(raf);

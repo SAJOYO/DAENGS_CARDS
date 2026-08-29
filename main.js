@@ -397,15 +397,22 @@ CARDS.forEach((card, i) => {
     `<span class="stat">${esc(statText(card))}</span>`;
 
   // 그냥 누르면 상세 정보(확대 뷰)로 간다. 회전은 여기가 아니라 확대 뷰에서 돈다.
-  stage.querySelector(".card").addEventListener("click", () => open(i));
+  //
+  // **.card 가 아니라 .stage 에 건다.** .card 는 가만히 있지 않는다 — 포인터를 따라
+  // 최대 ±12° 기울고(3D 투영이라 가장자리가 보이는 모양과 다르다), 꾹 누르는 동안
+  // scale(.955) 로 5~7px 줄어든다. 그래서 가장자리 근처를 누르면 뗄 때 커서가 카드
+  // 밖이고, click 이 .card 가 아니라 조상에서 나서 그냥 씹힌다 — 눌리다 말다 한다.
+  // .stage 는 절대 안 움직이고 카드와 같은 상자라, 아무 데나 눌러도 걸린다.
+  stage.addEventListener("click", () => open(i));
 
   // ☆☆☆ 는 꾹 눌러 안으로 들어간다. 게이지가 다 차기 전에 떼면 위의 click 이 살아서
   // 평범한 확대 뷰가 열린다 — 기존 동작은 그대로 남는다.
   if (isImmersive(card)) {
     // --accent 는 .stage 안에 갇혀 있어 캡션이 못 본다. 배지가 카드 색을 타도록 li 에 얹는다.
     li.style.setProperty("--accent", card.accent);
-    // 자리는 누를 때마다 다시 잰다 — 그리드가 스크롤됐을 수 있다
-    bindLongPress(stage, stage.querySelector(".card"),
+    // 자리는 누를 때마다 다시 잰다 — 그리드가 스크롤됐을 수 있다.
+    // 누르는 대상도 .card 가 아니라 .stage 다 (위의 click 과 같은 이유).
+    bindLongPress(stage, stage,
       () => openImmersive(card, stage.getBoundingClientRect()));
 
     // 장면 에셋 600KB 를 미리 받아 둔다. **꾹 누르는 520ms 가 그 시간이다** —
@@ -505,9 +512,10 @@ function render() {
   inner.className = "viewer-inner";
   inner.append(makeStage(card, { lazy: false, button: false }));
 
-  // 확대 뷰에서 카드를 누르면 빙그르르 돈다.
+  // 확대 뷰에서 카드를 누르면 빙그르르 돈다. 여기서도 .stage 에 건다 — 도는 동안
+  // .card 는 화면에 비친 상자가 납작해져서 클릭을 흘린다.
   const big = inner.querySelector(".stage");
-  big.querySelector(".card").addEventListener("click", (e) => spinCard(big, e));
+  big.addEventListener("click", (e) => spinCard(big, e));
   inner.insertAdjacentHTML("beforeend", detailMarkup(card));
   inner.insertAdjacentHTML("beforeend",
     '<button type="button" class="viewer-close" data-close aria-label="닫기">✕</button>' +
@@ -914,7 +922,7 @@ viewer.addEventListener("pointerup", (e) => {
 
     // 카드 위의 탭은 회전이 가져간다 (render 가 건 click 리스너). 여기서 설명까지
     // 토글하면 한 번 눌렀는데 둘 다 일어난다. 카드 바깥을 탭하면 그대로 설명이 열린다.
-    if (e.target.closest(".card")) return;
+    if (e.target.closest(".stage")) return;
 
     viewer.classList.toggle("show-detail");
   }
