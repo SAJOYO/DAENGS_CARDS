@@ -26,19 +26,28 @@
   initial-value: 0deg;
 }
 
-.stage.is-holding .card { filter: brightness(1.08) saturate(1.12); }
+/* 누르고 있다는 신호. 링만으로는 약하다 — 2px 짜리 선이 카드 자체의 밝은 테두리에
+   묻혀서, 3초를 버티는 동안 아무 일도 안 일어나는 것처럼 보인다. 카드가 살짝
+   눌려 들어가는 것이 제일 확실한 신호다. (.card 는 지금 transform 을 안 쓴다 —
+   기울기는 .tilt 가, 회전은 .spin 이 갖고 있어서 여기서 겹칠 게 없다.) */
+.stage.is-holding .card {
+  filter: brightness(1.1) saturate(1.14);
+  transform: scale(.955);
+  transition: transform 200ms cubic-bezier(.2, .8, .2, 1);
+}
 
 .stage.is-holding::after {
   content: "";
   position: absolute;
   inset: -9px;
   z-index: 3;
-  padding: 2px;
+  padding: 5px;          /* 곧 선 두께다. 2px 이면 카드 테두리에 묻혀서 안 보인다 */
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent2) 70%, transparent));
   border-radius: 5% / 3.6%;
   pointer-events: none;
   background: conic-gradient(from -90deg,
-    color-mix(in srgb, var(--accent2) 90%, #ffffff) var(--hold-p),
-    rgba(255, 255, 255, .1) 0);
+    color-mix(in srgb, var(--accent2) 55%, #ffffff) var(--hold-p),
+    rgba(0, 0, 0, .55) 0);
   /* 안쪽을 뚫어 테두리만 남긴다 — padding 이 곧 선 두께가 된다 */
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
@@ -970,7 +979,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage.is-holding::after { animation: none; background: rgba(255, 255, 255, .3); }
+  /* 꾹 누르기 게이지는 **끄지 않는다.** 장식이 아니라 진행 표시라, 이걸 멈추면
+     "몇 초 더 눌러야 하는지" 를 알 길이 아예 없어진다 — 링이 안 차오르니 카드가
+     안 눌리는 것으로 보인다. 대신 튀는 요소(글로우)만 뺀다. */
+  .stage.is-holding::after { filter: none; }
+  /* 카드가 눌려 들어가는 것도 남긴다. transition 은 style.css 가 이미 껐으므로
+     즉시 적용된다 — 움직임이 아니라 상태 표시가 된다. */
   .dio-move,
   .dio-hero,
   .dio-rind,
