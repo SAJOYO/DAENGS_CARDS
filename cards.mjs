@@ -356,10 +356,10 @@ export const CARDS = [
     rarity: "immersive",
     scene: {
       place: "보랏빛 결계 · 의식이 시작되기 직전",
-      // ⚠️ **임시**: 배추 곡을 그대로 물려 놨다. 배선(반복 재생 · 페이드 · 음소거 버튼)을
-      //    확인하려고 넣은 것이고, 밝은 클로버 곡이라 이 장면과는 안 맞는다.
-      //    고구마 곡이 오면 audio/ 에 넣고 이 줄만 갈면 된다.
-      audio: "audio/tiptoe-through-clover.mp3",
+      // 이머시브 배경음. 배추와 같은 방식이다 — 30초짜리를 계속 반복하고 닫으면 멈춘다.
+      // 원본은 절대자 NEO 영상(mp4)이고 소리만 뽑아 192k mp3 로 넣었다.
+      // 음량은 배추 곡과 거의 같아서(평균 -14.5 / -14.3 dB) 따로 안 맞췄다.
+      audio: "audio/the-absolute-neo.mp3",
       back: "art/sweet-potato-back.webp",
       subject: "art/sweet-potato-subject.webp",
       card: "art/sweet-potato-card.webp",
