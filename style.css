@@ -284,6 +284,33 @@ body::before {
   transition: transform .4s ease;
 }
 
+/* ── 겹 세 장: .spin(회전) · .tilt(기울기) · .card(그림) ──
+   원래는 .card 하나가 기울기까지 맡았는데, 클릭 회전과 누끼 팝아웃이 붙으면서
+   셋으로 갈랐다. **한 요소에 회전과 기울기를 같이 걸면 안 된다** — 중첩 3D 회전이
+   되어 반 바퀴 근처에서 카드가 도는 게 아니라 비스듬한 바늘로 넘어간다.
+   FLIP(확대 뷰로 날아가기)은 여전히 .stage 가 맡으므로 셋 다 서로 안 겹친다. */
+.spin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+/* 기울기. 누끼(.hero)가 카드와 같이 기울어야 해서 둘을 함께 감싸는 자리로 올렸다. */
+.tilt {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) translateZ(0);
+  transition: transform 620ms cubic-bezier(.2, .8, .2, 1);
+}
+
+/* 도는 동안에는 기울기를 접는다. .stage 의 인라인 변수를 상속으로 받는 대신
+   여기서 직접 선언해 이긴다 — JS 를 건드리지 않아도 된다. */
+.stage.is-spinning .tilt {
+  --rotate-x: 0deg;
+  --rotate-y: 0deg;
+}
+
 .card {
   position: absolute;
   inset: 0;
@@ -295,8 +322,7 @@ body::before {
   border-radius: 3.05% / 2.2%;
   cursor: pointer;
   transform-style: preserve-3d;
-  transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) translateZ(0);
-  transition: transform 620ms cubic-bezier(.2, .8, .2, 1), filter 400ms ease;
+  transition: filter 400ms ease;
   box-shadow:
     var(--shadow-x) var(--shadow-y) 55px rgba(0, 0, 0, .58),
     0 22px 44px rgba(0, 0, 0, .48),
@@ -305,11 +331,54 @@ body::before {
 }
 
 /* will-change 는 활성 카드에만 — 6장 전부에 걸면 레이어가 6개 생긴다 */
-.stage:is(:hover, :focus-within) .card {
-  transition: transform 85ms linear, filter 180ms ease;
-  filter: saturate(1.07) contrast(1.03);
+.stage:is(:hover, :focus-within) .tilt {
+  transition: transform 85ms linear;
   will-change: transform;
 }
+
+.stage:is(:hover, :focus-within) .card {
+  transition: filter 180ms ease;
+  filter: saturate(1.07) contrast(1.03);
+}
+
+/* ── 누끼 팝아웃 ───────────────────────────────────────────
+   확대 뷰에서 카드를 누르면 주인공이 카드 테두리 밖으로 떠오른다.
+   **.card 의 형제여야 한다** — 안에 넣으면 .card 의 overflow:hidden 에 잘려
+   프레임을 못 넘는다. 자리는 cards.mjs 의 scene.fit 이 정한다.
+   쉴 때 안 보이게 두는 것은 의도다: 누끼가 카드 그림과 다른 렌더인 카드가 있어서
+   (고구마) 겹쳐 두면 어긋난 두 겹이 같이 보인다. 떠오르면서 나타나게 한다. */
+.hero {
+  position: absolute;
+  left: calc(var(--fx) * 1%);
+  top: calc(var(--fy) * 1%);
+  width: calc(var(--fw) * 1%);
+  height: calc(var(--fh) * 1%);
+  transform-origin: 50% 100%;
+  transform: translateZ(var(--lift, 0px)) translateY(var(--rise, 0px)) scale(var(--grow, 1));
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .58));
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 520ms cubic-bezier(.2, .85, .25, 1), opacity 320ms ease;
+}
+
+/* 얼마나 올릴지(--rise)는 **JS 가 화면을 보고 px 로 넣는다** (main.js 의 pop()).
+   비율로 박아 두면 안 된다 — 확대 뷰의 카드는 창 비율에 따라 화면보다 커지기도 해서,
+   같은 값이 어떤 창에서는 프레임을 못 넘고 어떤 창에서는 화면 위로 잘려 나간다. */
+.stage.is-popped .hero {
+  --lift: 74px;
+  --grow: 1.06;
+  opacity: 1;
+}
+
+/* 떠오른 동안 카드에 인쇄된 주인공은 자국처럼 죽인다 — 안 죽이면 유령이 하나 더 보인다 */
+.stage.is-popped .card {
+  filter: brightness(.62) saturate(.7) blur(.6px);
+}
+
+.stage[data-pop="1"] .card { cursor: zoom-in; }
+.stage[data-pop="1"].is-popped .card { cursor: zoom-out; }
 
 .stage:active .card { cursor: grabbing; }
 
@@ -764,7 +833,9 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card { transition: none; transform: none !important; }
+  .card { transition: none; }
+  .tilt { transition: none; transform: none !important; }
+  .hero { transition: none; }
   .stage::before { transition: none; }
   .foil, .glare { opacity: .16; }
   .page { transition: none; }

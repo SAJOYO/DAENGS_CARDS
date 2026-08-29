@@ -8,10 +8,12 @@ const dialog = document.querySelector("#immersive");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** 꾹 누르는 시간. immersive.css 의 게이지가 이 값을 --hold-ms 로 받아 쓴다. */
-const HOLD_MS = 520;
+// 꾹 3초. 명세로 정한 값이다 — 카드를 오래 눌러야 이머시브로 들어간다.
+// 게이지(immersive.css 의 .stage.is-holding::after)가 이 시간에 맞춰 한 바퀴 찬다.
+const HOLD_MS = 3000;
 
 /** 이만큼 움직이면 꾹이 아니라 스크롤/드래그로 본다. 스크롤을 막지 않으려면 필요하다. */
-const SLOP = 10;
+const SLOP = 24;
 
 /* esc 는 main.js 에도 있다. 거기서 가져오면 main → immersive → main 순환이 되므로
    짧은 함수 하나는 각자 갖는다. */
@@ -735,6 +737,12 @@ export function closeImmersive() {
   if (!dialog?.open) return;
   if (closing) return;
 
+  // 꾹이 완성되면 그 다음 click 하나를 삼키려고 swallow 를 세워 두는데, 손을 뗀 자리가
+  // 이미 이 dialog 위라서 click 이 카드에서 안 나는 경우가 있다. 그러면 swallow 가
+  // 1500ms 동안 남아 있다가 **닫은 뒤에 누른 다른 카드의 click 을 대신 먹는다** —
+  // 눌리다 말다 하는 것처럼 보인다. 닫을 때 확실히 내린다.
+  swallow = 0;
+
   stopGyro();
   stopAudio();
   cancelAnimationFrame(raf);
@@ -831,6 +839,14 @@ export function bindLongPress(stage, target, onFire) {
     if (e.button > 0) return;   // 오른쪽/가운데 버튼은 무시
     sx = e.clientX;
     sy = e.clientY;
+
+    // **포인터를 붙잡는다.** 이게 없으면 누르고 있는 동안 카드가 기울면서(포인터를
+    // 따라 rotateX/rotateY 가 계속 바뀐다) 커서가 카드의 기울어진 모양 밖으로
+    // 나가는 순간이 생기고, 그때 pointerleave 가 떠서 게이지가 조용히 끊긴다.
+    // 손은 그대로 있는데 안 들어가지는 것처럼 보인다. 붙잡아 두면 카드가 어떻게
+    // 움직이든 pointermove/up 이 계속 이 요소로 온다.
+    try { target.setPointerCapture(e.pointerId); } catch { /* 지원 안 하면 그냥 둔다 */ }
+
     stage.style.setProperty("--hold-ms", `${HOLD_MS}ms`);
     stage.classList.add("is-holding");
     clearTimeout(timer);
@@ -850,7 +866,10 @@ export function bindLongPress(stage, target, onFire) {
     if (Math.hypot(e.clientX - sx, e.clientY - sy) > SLOP) stop();
   });
 
-  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) {
+  // pointerleave 는 더 이상 취소 사유가 아니다 — 위에서 포인터를 붙잡았으므로 손이
+  // 떠난 게 아니라 **카드가 움직여서** 뜨는 경우가 대부분이다. 진짜로 손을 뗀 것은
+  // pointerup 이 알려주고, 붙잡기를 잃으면 lostpointercapture 가 알려준다.
+  for (const ev of ["pointerup", "pointercancel", "lostpointercapture"]) {
     target.addEventListener(ev, stop);
   }
 
