@@ -313,7 +313,8 @@ function makeStage(card, { lazy = true, button = true } = {}) {
 
   // cards-css 는 `.holo-card[data-effect="x"] .holo-card__shine` 을 찾는다. vendor 의
   // CSS 를 한 글자도 안 고치려고, 선택자를 바꾸는 대신 우리 요소에 그쪽 이름을 얹는다.
-  // rarity 가 CARDS_CSS_EFFECTS 에 있을 때만 붙는다 — 지금은 No.01(immersive)만 빠진다.
+  // rarity 가 CARDS_CSS_EFFECTS 에 있을 때만 붙는다. 이머시브 여부와는 무관하다 —
+  // No.12 는 metal 포일을 그대로 쓰면서 이머시브이기도 하다.
   if (CARDS_CSS_EFFECTS.has(stage.dataset.rarity)) {
     stage.classList.add("holo-card");
     stage.dataset.effect = stage.dataset.rarity;
