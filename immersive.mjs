@@ -532,7 +532,18 @@ function build(card) {
 
 /* ── 열고 닫기 ─────────────────────────────────────────── */
 
-export const isImmersive = (card) => card?.rarity === "immersive";
+/**
+ * 이머시브 카드인가. **`scene` 이 있으면 이머시브다.**
+ *
+ * 예전엔 `rarity === "immersive"` 로 봤는데, 그러면 rarity 한 필드가 두 가지 일을
+ * 겸하게 된다 — 어떤 포일을 그릴지, 그리고 이머시브인지. 그래서 이머시브를 붙이려면
+ * 그 카드가 쓰던 cards-css 포일을 **포기해야 했다.** 둘은 배타적일 이유가 없다:
+ * 포일은 카드 위에 얹히는 CSS 겹이고 이머시브는 별개의 dialog 다.
+ *
+ * 이제 rarity 는 포일만 정하고, 이머시브 여부는 scene 의 유무가 정한다.
+ * No.12 상추가 `metal` 포일을 유지한 채 이머시브를 갖는 첫 카드다.
+ */
+export const isImmersive = (card) => !!card?.scene;
 
 /**
  * 눌린 카드에서 큰 카드로 가는 변형을 재서 --flip-t 에 넣는다.
