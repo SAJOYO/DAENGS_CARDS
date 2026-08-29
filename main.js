@@ -323,11 +323,19 @@ function makeStage(card, { lazy = true, button = true } = {}) {
     ? '<button class="card" type="button">'
     : '<div class="card" tabindex="0" role="img">';
 
-  // 누끼 팝아웃은 scene.subject 와 scene.fit 이 둘 다 있는 카드만 할 수 있다.
-  // 지금은 No.01 배추와 No.10 고구마뿐이고, 나머지 열 장은 누끼 원화가 없다.
-  const fit = card.scene?.subject && card.scene?.fit ? card.scene.fit : null;
+  // 누끼 팝아웃에는 누끼(subject)와 그 자리(fit)가 필요하다. 그 둘은 두 군데서 온다:
+  //
+  //   card.pop    팝아웃만 하는 카드 (이머시브 아님)
+  //   card.scene  이머시브 카드 — 같은 누끼를 장면에서도 쓰므로 그대로 재활용한다
+  //
+  // **둘을 갈라 놓은 이유**: 이머시브 여부는 scene 의 유무가 정한다(immersive.mjs 의
+  // isImmersive). 팝아웃만 필요한 카드에 scene 을 주면 원치 않게 이머시브가 된다.
+  const popSrc = card.pop ?? card.scene;
+  const fit = popSrc?.subject && popSrc?.fit ? popSrc.fit : null;
   if (fit) {
     stage.dataset.pop = "1";
+    // 이머시브 없이 **팝아웃만** 하는 카드. 그리드에서 올려놓으면 튀어나온다.
+    if (card.pop) stage.dataset.popOnly = "1";
     stage.style.setProperty("--fx", fit.x);
     stage.style.setProperty("--fy", fit.y);
     stage.style.setProperty("--fw", fit.w);
@@ -343,7 +351,7 @@ function makeStage(card, { lazy = true, button = true } = {}) {
         <span class="grain" aria-hidden="true"></span>
         <span class="edge" aria-hidden="true"></span>
       ${button ? "</button>" : "</div>"}
-      ${fit ? `<img class="hero" src="${card.scene.subject}" alt="" aria-hidden="true" decoding="async">` : ""}
+      ${fit ? `<img class="hero" src="${popSrc.subject}" alt="" aria-hidden="true" decoding="async">` : ""}
     </div></div>`;
 
   const img = stage.querySelector(".art");
@@ -395,6 +403,19 @@ CARDS.forEach((card, i) => {
     `<span class="no">No. ${pad2(card.no)}</span>` +
     `<span class="name">${esc(card.name)}</span>` +
     `<span class="stat">${esc(statText(card))}</span>`;
+
+  // 팝아웃만 하는 카드(이머시브 아님)는 **올려놓으면** 주인공이 카드 밖으로 나온다.
+  // 누르는 동작을 하나도 안 쓰므로 기존 제스처(클릭 = 확대 뷰, 꾹 = 이머시브)와 안 겹친다.
+  // ⚠️ 터치에는 hover 가 없다. 폰에서 이 카드는 팝아웃이 안 난다 — 아래 남은 것 참고.
+  if (stage.dataset.popOnly === "1") {
+    stage.addEventListener("pointerenter", (e) => {
+      if (e.pointerType === "touch") return;
+      if (!stage.classList.contains("is-popped")) pop(stage);
+    });
+    stage.addEventListener("pointerleave", () => {
+      if (stage.classList.contains("is-popped")) pop(stage);
+    });
+  }
 
   // 그냥 누르면 상세 정보(확대 뷰)로 간다. 회전은 여기가 아니라 확대 뷰에서 돈다.
   //

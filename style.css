@@ -377,8 +377,8 @@ body::before {
   filter: brightness(.62) saturate(.7) blur(.6px);
 }
 
-.stage[data-pop="1"] .card { cursor: zoom-in; }
-.stage[data-pop="1"].is-popped .card { cursor: zoom-out; }
+/* 팝아웃은 누르는 게 아니라 올려놓으면 나므로 커서를 바꾸지 않는다.
+   (그리드 카드의 커서는 pointer 여야 한다 — 누르면 확대 뷰가 열린다.) */
 
 .stage:active .card { cursor: grabbing; }
 
