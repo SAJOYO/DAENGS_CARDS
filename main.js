@@ -6,6 +6,10 @@ const countEl = document.querySelector("#count");
 const viewer = document.querySelector("#viewer");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** 팝아웃만 하는 카드를 터치로 낼 때의 꾹 시간. 이머시브(3초)보다 훨씬 짧다 —
+ *  장면으로 들어가는 게 아니라 카드 위에서 잠깐 엿보는 연출이라 무겁게 잡을 이유가 없다. */
+const POP_HOLD_MS = 450;   // ← 쓰이는 곳(그리드 슬롯)보다 위에 있어야 한다: const 는 TDZ 가 있다
+
 /** 폰 레이아웃인지. style.css 의 760px 블록과 같은 기준을 써야 어긋나지 않는다. */
 const phoneViewer = matchMedia("(max-width: 760px)");
 
@@ -405,9 +409,18 @@ CARDS.forEach((card, i) => {
     `<span class="name">${esc(card.name)}</span>` +
     `<span class="stat">${esc(statText(card))}</span>`;
 
-  // 팝아웃만 하는 카드(이머시브 아님)는 **올려놓으면** 주인공이 카드 밖으로 나온다.
-  // 누르는 동작을 하나도 안 쓰므로 기존 제스처(클릭 = 확대 뷰, 꾹 = 이머시브)와 안 겹친다.
-  // ⚠️ 터치에는 hover 가 없다. 폰에서 이 카드는 팝아웃이 안 난다 — 아래 남은 것 참고.
+  // 팝아웃만 하는 카드(이머시브 아님)를 내는 길은 둘이다. 입력 방식이 달라서다.
+  //
+  //   마우스  올려놓으면 나오고 벗어나면 들어간다
+  //   터치    꾹 눌러서 (450ms). 누르는 동안 나와 있고 떼면 들어간다
+  //
+  // **터치에는 hover 가 없어서** 마우스 쪽만 두면 폰에서 이 카드는 아무 일도 안 난다.
+  // 더블탭은 안 쓴다 — 그리드에서 첫 탭이 이미 확대 뷰를 여는데, 두 번째 탭을 기다리려면
+  // 주 동작을 250ms 쯤 늦춰야 한다. 팝아웃 하나 때문에 카드 여는 게 굼떠지는 건 손해다.
+  //
+  // 꾹 누르기를 쓸 수 있는 것은 이 카드가 **이머시브가 아니라서** 그 자리가 비어 있기
+  // 때문이다. 배지(★★★ 꾹 눌러서 들어가기)도 이머시브 카드만 달리므로 문구가 어긋날
+  // 일도 없다. 이머시브 3초보다 훨씬 짧게 잡는다 — 가벼운 연출에 3초는 과하다.
   if (stage.dataset.popOnly === "1") {
     stage.addEventListener("pointerenter", (e) => {
       if (e.pointerType === "touch") return;
@@ -416,6 +429,18 @@ CARDS.forEach((card, i) => {
     stage.addEventListener("pointerleave", () => {
       if (stage.classList.contains("is-popped")) pop(stage);
     });
+
+    bindLongPress(stage, stage, (pointerType) => {
+      // 마우스는 이미 hover 로 나와 있다. 여기서 또 토글하면 오히려 들어가 버린다.
+      if (pointerType === "mouse") return;
+      if (!stage.classList.contains("is-popped")) pop(stage);
+      // 떼면 들어간다. 손가락을 대고 있는 동안만 보이는 '엿보기' 다.
+      const release = () => {
+        if (stage.classList.contains("is-popped")) pop(stage);
+      };
+      stage.addEventListener("pointerup", release, { once: true });
+      stage.addEventListener("pointercancel", release, { once: true });
+    }, POP_HOLD_MS);
   }
 
   // 그냥 누르면 상세 정보(확대 뷰)로 간다. 회전은 여기가 아니라 확대 뷰에서 돈다.

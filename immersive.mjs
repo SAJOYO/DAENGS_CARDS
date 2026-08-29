@@ -833,9 +833,11 @@ document.addEventListener("click", (e) => {
 /**
  * @param {HTMLElement} stage  게이지를 그릴 .stage
  * @param {HTMLElement} target 실제로 눌리는 .card
- * @param {() => void} onFire  꾹이 완성됐을 때
+ * @param {(pointerType: string) => void} onFire  꾹이 완성됐을 때. 누른 포인터 종류를 받는다
+ * @param {number} [holdMs]  꾹 시간. 안 주면 이머시브 기준(HOLD_MS).
+ *   팝아웃처럼 가벼운 연출은 3초가 과해서 짧게 준다.
  */
-export function bindLongPress(stage, target, onFire) {
+export function bindLongPress(stage, target, onFire, holdMs = HOLD_MS) {
   let timer = 0;
   let sx = 0;
   let sy = 0;
@@ -848,6 +850,7 @@ export function bindLongPress(stage, target, onFire) {
 
   target.addEventListener("pointerdown", (e) => {
     if (e.button > 0) return;   // 오른쪽/가운데 버튼은 무시
+    const kind = e.pointerType;   // onFire 가 마우스/터치를 갈라 쓸 수 있게 넘긴다
     sx = e.clientX;
     sy = e.clientY;
 
@@ -858,7 +861,7 @@ export function bindLongPress(stage, target, onFire) {
     // 움직이든 pointermove/up 이 계속 이 요소로 온다.
     try { target.setPointerCapture(e.pointerId); } catch { /* 지원 안 하면 그냥 둔다 */ }
 
-    stage.style.setProperty("--hold-ms", `${HOLD_MS}ms`);
+    stage.style.setProperty("--hold-ms", `${holdMs}ms`);
     stage.classList.add("is-holding");
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -868,8 +871,8 @@ export function bindLongPress(stage, target, onFire) {
       // 영영 안 오는 경우(pointercancel)를 대비해 시간 제한도 건다.
       swallow = 1;
       setTimeout(() => { swallow = 0; }, 1500);
-      onFire();
-    }, HOLD_MS);
+      onFire(kind);
+    }, holdMs);
   });
 
   target.addEventListener("pointermove", (e) => {
