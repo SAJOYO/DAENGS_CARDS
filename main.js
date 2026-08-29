@@ -396,17 +396,8 @@ CARDS.forEach((card, i) => {
     `<span class="name">${esc(card.name)}</span>` +
     `<span class="stat">${esc(statText(card))}</span>`;
 
-  // 누르고 있던 시간을 재 둔다. 꾹 누르다 만 것(게이지를 못 채우고 뗀 것)까지
-  // 720° 를 돌려 버리면, 이머시브를 노렸던 사람에게는 "엉뚱한 게 나왔다" 가 된다.
-  // 빠르게 탭한 것만 돌린다.
-  const cardEl = stage.querySelector(".card");
-  let pressAt = 0;
-  cardEl.addEventListener("pointerdown", () => { pressAt = performance.now(); });
-  cardEl.addEventListener("click", (e) => {
-    const held = pressAt ? performance.now() - pressAt : 0;
-    pressAt = 0;
-    spinThenOpen(stage, i, e, held);
-  });
+  // 그냥 누르면 상세 정보(확대 뷰)로 간다. 회전은 여기가 아니라 확대 뷰에서 돈다.
+  stage.querySelector(".card").addEventListener("click", () => open(i));
 
   // ☆☆☆ 는 꾹 눌러 안으로 들어간다. 게이지가 다 차기 전에 떼면 위의 click 이 살아서
   // 평범한 확대 뷰가 열린다 — 기존 동작은 그대로 남는다.
@@ -427,13 +418,14 @@ CARDS.forEach((card, i) => {
     const prime = () => preloadScene(card);
     stage.addEventListener("pointerdown", prime);
 
-    const badge = document.createElement("button");
-    badge.type = "button";
+    // 배지는 **누르는 물건이 아니라 안내문**이다. 들어가는 길은 카드를 꾹 누르는
+    // 것 하나뿐이다. (버튼이었을 때는 눌러서도 들어갔는데, 그러면 카드를 안 누르고
+    // 배지만 누르게 된다.)
+    // ⚠️ 그 대신 키보드·스크린리더에서 이머시브로 들어갈 길이 없어졌다.
+    const badge = document.createElement("span");
     badge.className = "im-badge";
     badge.textContent = "★★★ 꾹 눌러서 들어가기";
-    badge.addEventListener("pointerenter", prime);   // 데스크톱은 올려놓는 동안 받는다
-    badge.addEventListener("pointerdown", prime);
-    badge.addEventListener("click", () => openImmersive(card, stage.getBoundingClientRect()));
+    badge.addEventListener("pointerenter", prime);   // 올려놓는 동안 장면을 미리 받아 둔다
     caption.append(badge);
   }
 
@@ -513,10 +505,9 @@ function render() {
   inner.className = "viewer-inner";
   inner.append(makeStage(card, { lazy: false, button: false }));
 
-  // 확대 뷰에서 카드를 누르면 주인공이 프레임 밖으로 튀어나온다. 누끼가 있는
-  // 카드만 (지금은 No.01 · No.10). render() 가 매번 새로 그리므로 상태는 안 남는다.
-  const popStage = inner.querySelector('.stage[data-pop="1"]');
-  if (popStage) popStage.querySelector(".card").addEventListener("click", () => pop(popStage));
+  // 확대 뷰에서 카드를 누르면 빙그르르 돈다.
+  const big = inner.querySelector(".stage");
+  big.querySelector(".card").addEventListener("click", (e) => spinCard(big, e));
   inner.insertAdjacentHTML("beforeend", detailMarkup(card));
   inner.insertAdjacentHTML("beforeend",
     '<button type="button" class="viewer-close" data-close aria-label="닫기">✕</button>' +
@@ -526,7 +517,12 @@ function render() {
   viewer.append(inner);
 }
 
-/* ── 누끼 팝아웃 ───────────────────────────────────────────
+/* ── 누끼 팝아웃 (지금은 붙는 동작이 없다) ─────────────────
+   ⚠️ **아직 아무 제스처에도 안 걸려 있다.** 확대 뷰의 카드 클릭은 회전이 가져갔다.
+   에셋(.hero)과 CSS(.stage.is-popped)는 그대로 두었으니 자리를 정하면 pop(stage)
+   한 줄만 부르면 된다. 쓸 데가 없다고 판단되면 이 함수와 makeStage 의 .hero,
+   style.css 의 .hero/.is-popped 를 같이 지우면 된다.
+
    얼마나 올릴지를 **그때그때 잰다.** 비율로 박아 두면 안 된다 — 확대 뷰의 카드는
    창 비율을 따라 커져서, 어떤 창에서는 카드가 화면보다 크다(위가 이미 잘려 있다).
    같은 -28% 가 넓은 창에서는 프레임을 시원하게 넘고 낮은 창에서는 누끼를 화면
@@ -605,24 +601,16 @@ function flightKeyframes(fromRect, toRect) {
   ];
 }
 
-/* ── 클릭하면 한참 돌고 나서 확대 뷰로 ─────────────────────
-   꾹 누르기(이머시브)와 갈린다: 게이지가 다 차면 immersive.mjs 의 swallow 가
-   그 다음 click 을 document 캡처 단계에서 삼키므로 여기까지 오지 않는다.
-   중간에 떼면 click 이 살아서 이 길로 온다.
-
+/* ── 확대 뷰에서 카드를 누르면 빙그르르 ────────────────────
    회전은 .spin 에만 건다. 기울기는 .tilt, FLIP 은 .stage 라 셋이 안 겹친다.
-   720° 는 0° 와 같은 그림이라 끝나고 나서 재는 .stage 의 자리가 그대로다 —
-   FLIP 이 시작 위치를 잘못 잡지 않으려면 **다 돌고 나서** open() 을 불러야 한다.
-   도는 중에 재면 화면에 비친 상자가 납작해져 있다. */
+   **한 요소에 회전과 기울기를 같이 걸면 안 된다** — 중첩 3D 회전이 되어 반 바퀴
+   근처에서 카드가 도는 게 아니라 비스듬한 바늘로 넘어간다. */
 
 const SPIN = { turn: 720, duration: 560, easing: "cubic-bezier(.28,.9,.3,1)" };
-/** 이보다 오래 눌렀다 뗐으면 회전을 건너뛴다. 꾹 누르기(220ms)를 노리다 만 손이다. */
-SPIN.tapMax = 150;
 
-function spinThenOpen(stage, i, e, held = 0) {
+function spinCard(stage, e) {
   const spin = stage.querySelector(".spin");
-  if (reducedMotion || !spin) return open(i);
-  if (held > SPIN.tapMax) return open(i);   // 꾹 누르다 만 것 — 조용히 확대 뷰만 연다
+  if (reducedMotion || !spin) return;
   if (stage.classList.contains("is-spinning")) return;   // 연타로 각도가 겹치지 않게
 
   // 누른 쪽으로 돈다. 오른쪽을 누르면 오른쪽 모서리가 뒤로 넘어간다.
@@ -640,14 +628,14 @@ function spinThenOpen(stage, i, e, held = 0) {
   ], SPIN);
 
   // **finished 만 믿으면 안 된다.** 배경 탭에서는 애니메이션 타임라인이 멈춰서
-  // 회전이 시작값에 고정되고 finished 가 영영 안 온다 — 그러면 누른 클릭이 통째로
-  // 사라진다. 숨은 탭에서도 도는 setTimeout 으로 받쳐 둔다 (slide 쪽과 같은 이유).
+  // 회전이 시작값에 고정되고 finished 가 영영 안 온다 — 그러면 is-spinning 이
+  // 영영 안 벗겨져 다음 클릭이 통째로 씹힌다. 숨은 탭에서도 도는 setTimeout 으로
+  // 받쳐 둔다 (slide 쪽과 같은 이유).
   let fired = false;
   const done = () => {
     if (fired) return;
     fired = true;
     stage.classList.remove("is-spinning");
-    open(i);
   };
   anim.finished.then(done).catch(done);
   setTimeout(done, SPIN.duration + 250);
@@ -924,9 +912,9 @@ viewer.addEventListener("pointerup", (e) => {
 
     if (edge) return go(edge);   // go 가 알아서 buttons 를 다시 띄운다
 
-    // 카드 위의 탭은 팝아웃이 가져간다 (render 가 건 click 리스너). 여기서 설명까지
+    // 카드 위의 탭은 회전이 가져간다 (render 가 건 click 리스너). 여기서 설명까지
     // 토글하면 한 번 눌렀는데 둘 다 일어난다. 카드 바깥을 탭하면 그대로 설명이 열린다.
-    if (viewer.querySelector('.stage[data-pop="1"]') && e.target.closest(".card")) return;
+    if (e.target.closest(".card")) return;
 
     viewer.classList.toggle("show-detail");
   }
