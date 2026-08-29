@@ -979,7 +979,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage.is-holding::after { animation: none; background: rgba(255, 255, 255, .3); }
+  /* 꾹 누르기 게이지는 **끄지 않는다.** 장식이 아니라 진행 표시라, 이걸 멈추면
+     "몇 초 더 눌러야 하는지" 를 알 길이 아예 없어진다 — 링이 안 차오르니 카드가
+     안 눌리는 것으로 보인다. 대신 튀는 요소(글로우)만 뺀다. */
+  .stage.is-holding::after { filter: none; }
+  /* 카드가 눌려 들어가는 것도 남긴다. transition 은 style.css 가 이미 껐으므로
+     즉시 적용된다 — 움직임이 아니라 상태 표시가 된다. */
   .dio-move,
   .dio-hero,
   .dio-rind,
