@@ -8,7 +8,11 @@ const dialog = document.querySelector("#immersive");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** 꾹 누르는 시간. immersive.css 의 게이지가 이 값을 --hold-ms 로 받아 쓴다. */
-const HOLD_MS = 520;
+// 실측으로 내린 값. 처음엔 520ms 였는데, 실제로 꾹 누르는 사람이 **231ms** 에 손을
+// 뗐다 — 움직임 없이(d=0) 게이지만 절반쯤 차다 사라져서 "카드가 안 눌린다" 로 보였다.
+// 그 231ms 아래로 내려야 실제로 들어가진다. 보통 클릭은 60~150ms 라 220ms 면
+// 클릭과는 아직 갈린다. 잘못 들어가도 Esc 한 번이면 나오니, 못 들어가는 쪽이 더 나쁘다.
+const HOLD_MS = 220;
 
 /** 이만큼 움직이면 꾹이 아니라 스크롤/드래그로 본다. 스크롤을 막지 않으려면 필요하다. */
 const SLOP = 24;

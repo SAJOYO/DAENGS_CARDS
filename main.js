@@ -616,8 +616,8 @@ function flightKeyframes(fromRect, toRect) {
    도는 중에 재면 화면에 비친 상자가 납작해져 있다. */
 
 const SPIN = { turn: 720, duration: 560, easing: "cubic-bezier(.28,.9,.3,1)" };
-/** 이보다 오래 눌렀다 뗐으면 회전을 건너뛴다. 꾹 누르기(520ms)를 노리다 만 손이다. */
-SPIN.tapMax = 300;
+/** 이보다 오래 눌렀다 뗐으면 회전을 건너뛴다. 꾹 누르기(220ms)를 노리다 만 손이다. */
+SPIN.tapMax = 150;
 
 function spinThenOpen(stage, i, e, held = 0) {
   const spin = stage.querySelector(".spin");
