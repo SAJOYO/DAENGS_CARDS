@@ -6,9 +6,12 @@ const countEl = document.querySelector("#count");
 const viewer = document.querySelector("#viewer");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** 팝아웃만 하는 카드를 터치로 낼 때의 꾹 시간. 이머시브(3초)보다 훨씬 짧다 —
- *  장면으로 들어가는 게 아니라 카드 위에서 잠깐 엿보는 연출이라 무겁게 잡을 이유가 없다. */
-const POP_HOLD_MS = 450;   // ← 쓰이는 곳(그리드 슬롯)보다 위에 있어야 한다: const 는 TDZ 가 있다
+/** 확대 뷰에서 카드를 짚었을 때 누끼가 떠오르기까지. 이만큼 넘게 누르고 있어야 한다.
+ *  짧게 잡는 이유: '짚고 있으면 떠오른다' 는 감각이라 기다리는 느낌이 나면 안 된다.
+ *  다만 0 이면 탭(=회전)과 구분이 안 되므로 최소한의 여유만 둔다. */
+const PEEK_MS = 160;
+/** 짚은 채 이만큼 넘게 움직이면 엿보기가 아니라 다른 동작으로 본다 (스와이프 등). */
+const PEEK_SLOP = 16;
 
 /** 폰 레이아웃인지. style.css 의 760px 블록과 같은 기준을 써야 어긋나지 않는다. */
 const phoneViewer = matchMedia("(max-width: 760px)");
@@ -409,18 +412,10 @@ CARDS.forEach((card, i) => {
     `<span class="name">${esc(card.name)}</span>` +
     `<span class="stat">${esc(statText(card))}</span>`;
 
-  // 팝아웃만 하는 카드(이머시브 아님)를 내는 길은 둘이다. 입력 방식이 달라서다.
-  //
-  //   마우스  올려놓으면 나오고 벗어나면 들어간다
-  //   터치    꾹 눌러서 (450ms). 누르는 동안 나와 있고 떼면 들어간다
-  //
-  // **터치에는 hover 가 없어서** 마우스 쪽만 두면 폰에서 이 카드는 아무 일도 안 난다.
-  // 더블탭은 안 쓴다 — 그리드에서 첫 탭이 이미 확대 뷰를 여는데, 두 번째 탭을 기다리려면
-  // 주 동작을 250ms 쯤 늦춰야 한다. 팝아웃 하나 때문에 카드 여는 게 굼떠지는 건 손해다.
-  //
-  // 꾹 누르기를 쓸 수 있는 것은 이 카드가 **이머시브가 아니라서** 그 자리가 비어 있기
-  // 때문이다. 배지(★★★ 꾹 눌러서 들어가기)도 이머시브 카드만 달리므로 문구가 어긋날
-  // 일도 없다. 이머시브 3초보다 훨씬 짧게 잡는다 — 가벼운 연출에 3초는 과하다.
+  // 팝아웃만 하는 카드(이머시브 아님)는 **그리드에서 올려놓으면** 나온다.
+  // 마우스 전용이다 — 터치에는 hover 가 없다. 폰에서는 확대 뷰에서 짚어서 낸다
+  // (아래 bindPeek). 그리드에서 매번 꾹 누르게 하는 것도 해 봤는데, 카드를 넘길
+  // 때마다 3초씩 눌러야 해서 금세 지루해진다.
   if (stage.dataset.popOnly === "1") {
     stage.addEventListener("pointerenter", (e) => {
       if (e.pointerType === "touch") return;
@@ -430,17 +425,6 @@ CARDS.forEach((card, i) => {
       if (stage.classList.contains("is-popped")) pop(stage);
     });
 
-    bindLongPress(stage, stage, (pointerType) => {
-      // 마우스는 이미 hover 로 나와 있다. 여기서 또 토글하면 오히려 들어가 버린다.
-      if (pointerType === "mouse") return;
-      if (!stage.classList.contains("is-popped")) pop(stage);
-      // 떼면 들어간다. 손가락을 대고 있는 동안만 보이는 '엿보기' 다.
-      const release = () => {
-        if (stage.classList.contains("is-popped")) pop(stage);
-      };
-      stage.addEventListener("pointerup", release, { once: true });
-      stage.addEventListener("pointercancel", release, { once: true });
-    }, POP_HOLD_MS);
   }
 
   // 그냥 누르면 상세 정보(확대 뷰)로 간다. 회전은 여기가 아니라 확대 뷰에서 돈다.
@@ -563,6 +547,9 @@ function render() {
   // .card 는 화면에 비친 상자가 납작해져서 클릭을 흘린다.
   const big = inner.querySelector(".stage");
   big.addEventListener("click", (e) => spinCard(big, e));
+  // 짚고 있으면 주인공이 떠오른다. 누끼가 있는 카드만 — 지금은 배추 · 고구마 ·
+  // 토마토 · 상추다. 탭(회전)과는 시간으로 갈린다.
+  if (big.dataset.pop === "1") bindPeek(big);
   inner.insertAdjacentHTML("beforeend", detailMarkup(card));
   inner.insertAdjacentHTML("beforeend",
     '<button type="button" class="viewer-close" data-close aria-label="닫기">✕</button>' +
@@ -620,6 +607,67 @@ function pop(stage) {
   hero.style.setProperty("--grow", (1 + (POP.grow - 1) * k).toFixed(3));
   hero.style.setProperty("--rise", `${(-wantRise * k).toFixed(1)}px`);
   stage.classList.add("is-popped");
+}
+
+/* ── 확대 뷰에서 짚으면 떠오른다 (엿보기) ──────────────────
+   확대 뷰의 카드를 **짚고 있는 동안** 주인공이 프레임 밖으로 떠오르고, 떼면 들어간다.
+
+   같은 자리의 탭은 회전(spinCard)이 가져간다. 둘을 시간으로 가른다:
+     ~160ms 안에 떼면   탭 → 회전
+     160ms 넘게 짚으면  엿보기 → 뗄 때까지 떠 있고, **그 다음 click 은 삼킨다**
+                        (안 삼키면 손을 뗀 순간 회전까지 같이 난다)
+
+   그리드에서 꾹 누르는 방식도 해 봤는데, 카드를 넘길 때마다 눌러야 해서 지루하다.
+   확대 뷰는 이미 한 장을 들여다보는 자리라 짚는 동작이 자연스럽다.
+
+   마우스도 같이 된다. 데스크톱에서는 그리드의 hover 와 확대 뷰의 짚기 둘 다 쓸 수 있다. */
+
+function bindPeek(stage) {
+  let timer = 0;
+  let sx = 0;
+  let sy = 0;
+  let peeked = false;
+
+  const clear = () => { clearTimeout(timer); timer = 0; };
+
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.button > 0) return;
+    sx = e.clientX;
+    sy = e.clientY;
+    peeked = false;
+    // 붙잡아 둔다 — 누끼가 떠오르면서 카드가 커지면 커서가 .stage 밖으로 나갈 수 있고,
+    // 그러면 pointerup 을 못 받아 떠 있는 채로 굳는다.
+    try { stage.setPointerCapture(e.pointerId); } catch { /* 지원 안 하면 그냥 둔다 */ }
+    clear();
+    timer = setTimeout(() => {
+      timer = 0;
+      peeked = true;
+      if (!stage.classList.contains("is-popped")) pop(stage);
+    }, PEEK_MS);
+  });
+
+  stage.addEventListener("pointermove", (e) => {
+    if (!timer && !peeked) return;
+    if (Math.hypot(e.clientX - sx, e.clientY - sy) > PEEK_SLOP) {
+      clear();
+      if (peeked) { peeked = false; if (stage.classList.contains("is-popped")) pop(stage); }
+    }
+  });
+
+  const end = () => {
+    clear();
+    if (!peeked) return;              // 짧게 뗀 것 — 회전이 가져가게 둔다
+    peeked = false;
+    if (stage.classList.contains("is-popped")) pop(stage);
+    // 손을 뗀 뒤 click 이 온다. 엿보기였으면 회전까지 나면 안 된다.
+    stage.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, { capture: true, once: true });
+  };
+  for (const ev of ["pointerup", "pointercancel", "lostpointercapture"]) {
+    stage.addEventListener(ev, end);
+  }
 }
 
 /* ── 그리드 슬롯 ↔ 가운데 날아가기 (FLIP) ──────────────────
