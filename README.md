@@ -30,10 +30,16 @@ py -m http.server 5173        # 또는: npx serve .
 - 도감 → `http://localhost:5173/index.html`
 - 홀로 스튜디오 → `http://localhost:5173/studio.html`
 - 3장 자동 대결 → `http://localhost:5173/battle.html` — 카드 선택·순서 변경·NPC 연습·재도전
+- 채소 투척전 → `http://localhost:5173/throw.html` — 캐릭터 선택·버튼/Space 타이밍 투척·NPC·재도전
 
 `py` 명령이 없는 PC에서는 `python -m http.server 5173 --bind 127.0.0.1`로 실행하고
 `http://127.0.0.1:5173/battle.html`을 엽니다. 게임 규칙과 검증 방법은
 [docs/battle.md](docs/battle.md)에 있습니다. 설치나 빌드는 필요하지 않습니다.
+
+기존 미리보기가 5173을 사용 중이면 새 체크아웃에서
+`python -m http.server 5175 --bind 127.0.0.1`을 실행합니다.
+투척전은 `http://127.0.0.1:5175/throw.html`에서 열 수 있습니다.
+캐릭터별 타이밍과 조작·검증 방법은 [docs/throw.md](docs/throw.md)에 있습니다.
 
 `localhost` 는 secure context 라 **개발 중에는 자이로가 켜집니다.** 폰으로 확인하려면
 같은 LAN 에서 PC IP 로 접속해야 하는데 그건 secure context 가 아니라 안 켜집니다 —
@@ -48,6 +54,10 @@ py -m http.server 5173        # 또는: npx serve .
 | `battle.html` `battle.css` `battle-ui.mjs` | 3장 자동 대결의 팀 편성·이벤트 재생·결과 화면 |
 | `battle-data.mjs` `battle-engine.mjs` | ID 기반 전투 목록·연습 상대와 순수 전투 시뮬레이션 |
 | `tests/battle.test.mjs` | Node 기본 테스트 러너로 전투 경계·모든 순서 팀 검증 |
+| `throw.html` `throw.css` `throw-ui.mjs` | 채소 투척전의 선택·게이지·턴 재생·결과·일시정지 |
+| `throw-data.mjs` `throw-engine.mjs` | ID 기반 타이밍 프로필·순수 판정·턴 전이·활성 시간 |
+| `throw-renderer.mjs` `throw-audio.mjs` | 기존 누끼의 Canvas 연출과 선택적 Web Audio 합성 |
+| `tests/throw.test.mjs` | 판정 경계·중복 이벤트·재시작·9대진 스크립트 검증 |
 | `cards.mjs` `main.js` `style.css` `rarity.css` `touch.css` | 도감 본체 |
 | `immersive.css` `immersive.mjs` | No.01 전용 이머시브 뷰 |
 | `tilt-engine.js` | 스튜디오와 내보낸 HTML 이 같이 쓰는 기울기 엔진 (자이로 포함) |
