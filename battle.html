@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101813">
+  <title>네오의 텃밭 대결 · DAENGS</title>
+  <link rel="icon" href="./art/cabbage.webp" type="image/webp">
+  <link rel="stylesheet" href="./battle.css">
+</head>
+<body class="battle-page">
+  <div class="battle-shell">
+    <header class="battle-nav">
+      <a href="./index.html">← 도감으로</a>
+      <span>DAENGS / PLAY</span>
+      <span class="battle-demo">네오 카드 데모</span>
+    </header>
+    <main>
+      <div id="battle-setup">
+        <div class="battle-heading">
+          <p class="battle-eyebrow">작은 팀, 한 판의 반전</p>
+          <h1>네오의 <br>텃밭 대결<span aria-hidden="true">.</span></h1>
+          <p>세 장을 고르고, 순서를 바꾸고.<br>우리 팀의 첫 승리를 만나 보세요.</p>
+        </div>
+        <div class="battle-setup-grid">
+          <section class="battle-pool-section" aria-labelledby="battle-pool-title">
+            <div class="battle-section-title">
+              <h2 id="battle-pool-title">01 <span>함께할 카드</span></h2>
+              <span class="battle-muted">모두 사용 가능</span>
+            </div>
+            <p class="battle-muted">누르면 선택, 다시 누르면 해제돼요.</p>
+            <div id="battle-roster" class="battle-roster"></div>
+            <p class="battle-footnote">공격·체력은 이 대결의 전용 수치예요. 그림에 인쇄된 숫자와는 별개예요.</p>
+            <details class="battle-rules">
+              <summary>능력과 대결 규칙</summary>
+              <ul id="battle-abilities"></ul>
+              <p>맨 앞의 살아 있는 카드끼리 동시에 공격해요. 쓰러져도 그 교환에 예약된 공격은 나가고, 남는 피해는 뒤로 넘어가지 않아요. 다음 카드가 나와도 남은 체력과 사용한 능력은 유지돼요.</p>
+              <p>양쪽이 함께 전멸하거나 100번의 교환이 지나면 무승부예요. 같은 팀과 순서로 다시 하면 같은 결과가 나와요.</p>
+            </details>
+          </section>
+          <aside class="battle-planning">
+            <section class="battle-panel" aria-labelledby="battle-team-title">
+              <div class="battle-section-title">
+                <h2 id="battle-team-title">02 <span>우리 팀 순서</span></h2>
+                <span id="battle-selected-count">0 / 3</span>
+              </div>
+              <p class="battle-muted">1번이 선두예요. 앞·뒤 버튼으로 바꿔 보세요.</p>
+              <ol id="battle-team" class="battle-team-editor"></ol>
+              <p id="battle-selection-note" class="battle-selection-note" role="status" aria-live="polite"></p>
+            </section>
+            <section class="battle-panel" aria-labelledby="battle-npc-title">
+              <h2 id="battle-npc-title">03 <span>연습 상대</span></h2>
+              <div id="battle-npcs" class="battle-npcs"></div>
+              <p id="battle-npc-note" class="battle-muted"></p>
+              <p class="battle-lineup-caption">상대 순서 · 왼쪽부터 선두</p>
+              <ol id="battle-npc-preview" class="battle-preview"></ol>
+            </section>
+            <div class="battle-start-bar">
+              <button id="battle-start" class="battle-primary" type="button" disabled>카드 3장을 골라 주세요</button>
+              <p>선두부터 자동 대결 · 짧고 가벼운 연습 한 판</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <section id="battle-arena" class="battle-arena" aria-labelledby="battle-arena-title" hidden>
+        <div class="battle-arena-heading">
+          <div><p class="battle-eyebrow">네오의 텃밭 대결</p><h1 id="battle-arena-title" tabindex="-1">대결 준비</h1></div>
+          <button id="battle-exit" class="battle-secondary" type="button">중단하고 팀 편집</button>
+        </div>
+        <p class="battle-muted battle-arena-rule">맨 앞의 살아 있는 카드끼리 동시에 공격해요.</p>
+        <div class="battle-field">
+          <section class="battle-side" aria-labelledby="battle-player-label">
+            <h2 id="battle-player-label">우리 팀</h2>
+            <ol id="battle-player-lineup" class="battle-lineup"></ol>
+          </section>
+          <div class="battle-versus" aria-hidden="true">VS</div>
+          <section class="battle-side" aria-labelledby="battle-opponent-label">
+            <h2 id="battle-opponent-label">연습 상대</h2>
+            <ol id="battle-opponent-lineup" class="battle-lineup"></ol>
+          </section>
+        </div>
+        <p id="battle-feedback" class="battle-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
+        <section id="battle-result" class="battle-result" aria-labelledby="battle-result-title" hidden>
+          <p class="battle-eyebrow">이번 한 판의 기록</p>
+          <h2 id="battle-result-title" tabindex="-1"></h2>
+          <p id="battle-result-summary"></p>
+          <p id="battle-survivors"></p>
+          <div class="battle-result-actions">
+            <button id="battle-retry" class="battle-primary" type="button">같은 팀으로 다시</button>
+            <button id="battle-edit" class="battle-secondary" type="button">팀 바꿔 도전</button>
+          </div>
+        </section>
+        <details id="battle-history" class="battle-rules">
+          <summary>대결 기록 보기</summary>
+          <ol id="battle-log" class="battle-log"></ol>
+        </details>
+      </section>
+      <noscript><p class="battle-feedback">대결을 하려면 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
+    </main>
+    <footer class="battle-footer">익숙한 얼굴로, 새로운 한 판. <span>DAENGS CARDS</span></footer>
+  </div>
+  <script type="module" src="./battle-ui.mjs"></script>
+</body>
+</html>
