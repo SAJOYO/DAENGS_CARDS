@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171728">
+  <title>네오 채소 투척전 · DAENGS ARCADE</title>
+  <link rel="icon" href="./art/tomato.webp" type="image/webp">
+  <link rel="stylesheet" href="./throw.css">
+</head>
+<body class="throw-page">
+  <main class="throw-shell">
+    <nav class="throw-nav" aria-label="게임 메뉴">
+      <a href="./index.html">← 카드 도감</a>
+      <span>DAENGS <b>ARCADE</b></span>
+      <button id="throw-mute" type="button" aria-pressed="false">소리 켜짐</button>
+    </nav>
+    <header class="throw-title">
+      <p>GREEN MARKET / 1 ON 1</p>
+      <h1>네오 <span>채소 투척전</span></h1>
+      <p id="throw-tagline">타이밍 한 번, 채소 한 방. 오늘 시장의 주인공은?</p>
+    </header>
+
+    <section id="throw-play" aria-label="대결 무대" data-phase="selection">
+      <div class="throw-scoreboard">
+        <div class="throw-health throw-health-player">
+          <p><span>1P · 나</span><strong id="throw-player-name"></strong></p>
+          <progress id="throw-player-hp" max="30" value="30" aria-label="내 체력"></progress>
+          <span id="throw-player-hp-text">30 / 30</span>
+        </div>
+        <div class="throw-round"><span id="throw-round-number">VS</span><small id="throw-round-caption">연습 대결</small></div>
+        <div class="throw-health throw-health-npc">
+          <p><span>CPU · 상대</span><strong id="throw-npc-name"></strong></p>
+          <progress id="throw-npc-hp" max="30" value="30" aria-label="상대 체력"></progress>
+          <span id="throw-npc-hp-text">30 / 30</span>
+        </div>
+      </div>
+      <div class="throw-stage">
+        <canvas id="throw-canvas" role="img" aria-label="시장 바닥에 마주 선 두 네오 캐릭터"></canvas>
+        <div id="throw-banner" class="throw-banner" aria-hidden="true"><span>CHOOSE YOUR NEO</span></div>
+        <div class="throw-stage-label"><span>NEO MARKET</span><span>신선한 한 방!</span></div>
+      </div>
+      <p id="throw-feedback" class="throw-feedback" role="status" aria-live="polite" aria-atomic="true">캐릭터를 고르고 시작해 주세요.</p>
+
+      <div id="throw-controls" hidden>
+        <div class="throw-turn-line"><strong id="throw-turn-label">준비 중</strong><span id="throw-shot-label">중앙에 맞춰 던지세요</span></div>
+        <div class="throw-gauge" id="throw-gauge" role="meter" aria-label="던지기 타이밍, 중앙이 Perfect" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="throw-hit-zone" id="throw-hit-zone"><span>HIT</span><span>HIT</span></div>
+          <div class="throw-perfect-zone" id="throw-perfect-zone"><span>PERFECT</span></div>
+          <span class="throw-miss-label">MISS</span><span class="throw-miss-label">MISS</span>
+          <span id="throw-marker" class="throw-marker"></span>
+        </div>
+        <button id="throw-action" class="throw-primary throw-action" type="button" disabled>던지기 <small>SPACE</small></button>
+        <div class="throw-match-tools">
+          <button id="throw-restart" type="button">다시 시작</button>
+          <button id="throw-pause" type="button">일시정지</button>
+          <button id="throw-edit" type="button">캐릭터 변경</button>
+        </div>
+      </div>
+
+      <section id="throw-result" class="throw-result" aria-labelledby="throw-result-title" hidden>
+        <p id="throw-result-stamp"></p>
+        <h2 id="throw-result-title" tabindex="-1"></h2>
+        <p id="throw-result-detail"></p>
+        <div><button id="throw-retry" class="throw-primary" type="button">한 판 더!</button><button id="throw-select" class="throw-secondary" type="button">캐릭터 바꾸기</button></div>
+      </section>
+    </section>
+
+    <section id="throw-selection" class="throw-selection" aria-label="캐릭터 선택">
+      <div class="throw-choice-heading"><h2>01 <span>내 캐릭터</span></h2><span>누구나 선택 가능</span></div>
+      <div id="throw-roster" class="throw-roster" role="radiogroup" aria-label="내 캐릭터"></div>
+      <div class="throw-opponent-row">
+        <label for="throw-opponent">02 <strong>연습 상대</strong></label>
+        <select id="throw-opponent"></select>
+      </div>
+      <p id="throw-opponent-profile" class="throw-profile-note"></p>
+      <button id="throw-start" type="button" class="throw-primary" disabled>캐릭터 준비 중…</button>
+      <p id="throw-load-status" role="status" class="throw-profile-note">기존 네오 캐릭터를 불러오고 있어요.</p>
+      <details class="throw-rules"><summary>한 버튼으로 즐기는 법</summary>
+        <p>내 차례에 버튼을 누르거나 Space로 게이지를 멈춰요. 중앙의 노랑은 Perfect, 초록은 Hit, 바깥은 Miss예요. 결과에 따라 채소가 상대에게 닿거나 빗나가요.</p>
+        <p>나와 상대가 번갈아 던져요. 상대는 정해진 타이밍을 반복해요. 20라운드까지 둘 다 살아 있으면 남은 체력이 높은 쪽이 이겨요. 화면을 떠나면 일시정지되고, 돌아와서 이어 할 수 있어요.</p>
+      </details>
+    </section>
+    <details id="throw-record" class="throw-rules" hidden><summary>이번 대결 기록</summary><ol id="throw-log"></ol></details>
+    <noscript>JavaScript를 켜면 타이밍 대결을 플레이할 수 있어요.</noscript>
+    <footer class="throw-footer"><span>얼굴은 친숙하게. 승부는 엉뚱하게.</span><span>NEO / MARKET CUP</span></footer>
+  </main>
+  <script type="module" src="./throw-ui.mjs"></script>
+</body>
+</html>
