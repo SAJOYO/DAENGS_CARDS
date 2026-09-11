@@ -77,8 +77,12 @@ document.addEventListener('visibilitychange', () => {
  * @returns {{ impact: () => void }}
  */
 export function dash(sourceRow, targetRow, { damage, blocked, signal }) {
-  // 숨은 탭도 같이 건너뛴다 — 타임라인이 멈춰 finished 가 안 오는데 재생 루프는 계속 돌기 때문.
-  if (reduced.matches || document.visibilityState === 'hidden') return { impact() {} };
+  // ⚠️ 여기서 document.visibilityState 로 미리 걸러내지 않는다. 한 번 그렇게 했다가
+  // 되돌렸다 — occlusion 기준이라 탭이 실제로는 화면에 있어도(포커스만 없거나,
+  // 원격 데스크톱 · 자동화 도구로 열려 있으면) 'hidden' 이 나오는 경우가 있고,
+  // 그러면 이 함수가 매번 조용히 아무것도 안 만들어서 "이펙트가 아예 안 보인다" 로
+  // 보고된다. 진짜로 탭이 숨을 때는 위 visibilitychange 리스너가 이미 걷어 낸다.
+  if (reduced.matches) return { impact() {} };
   signal?.addEventListener('abort', cancelBattleFx, { once: true });
 
   const wrap = sourceRow.querySelector('.battle-art-wrap');
