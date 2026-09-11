@@ -1,5 +1,6 @@
 import { ABILITIES, BATTLE_ROSTER, PRACTICE_NPCS, TEAM_SIZE } from './battle-data.mjs';
 import { simulateBattle, validateTeam } from './battle-engine.mjs';
+import { dash } from './battle-fx.mjs';
 
 const $ = id => document.getElementById(`battle-${id}`);
 const selected = [];
@@ -328,9 +329,13 @@ async function play(report, signal) {
       clearEffects();
       const hits = event.hits.filter(hit => hit.hit === wave);
       $('feedback').textContent = `${intro}${burst.length ? ` · ${burst.join(' · ')} ${wave}번째 타격` : ''}`;
+      // 돌진은 여기서 출발시키고, 220ms 뒤 충돌 순간에 impact() 를 부른다 (battle-fx.mjs).
+      const dashes = hits.map(hit => dash(units.get(hit.source).row, units.get(hit.target).row,
+        { damage: hit.damage, blocked: hit.blocked, signal }));
       for (const hit of hits) units.get(hit.source).row.classList.add('battle-strike');
       await delay(220, signal);
       clearEffects();
+      for (const fx of dashes) fx.impact();
       const notes = [];
       // Both sides' HP is updated together for this wave, even after a lethal hit.
       for (const hit of hits) {

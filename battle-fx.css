@@ -1,0 +1,31 @@
+/* 대결 타격 연출의 껍데기. 움직임은 battle-fx.mjs 가 Web Animations API 로 넣는다 —
+   여기에는 @keyframes 가 없다. 링 · 파편은 opacity 0 이 기본값이라 애니메이션이 안 돌면
+   화면에 남는데, 그래서 reduced-motion 에서는 노드를 아예 안 만드는 것이 .mjs 의 책임이다.
+   battle.css 뒤에 링크한다 — .battle-unit 에 position 을 더 얹는다. */
+
+.battle-fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 40; overflow: hidden; }
+
+/* 돌진 중인 카드는 이웃 행 위로 지나간다 */
+.battle-unit.is-dashing { position: relative; z-index: 5; }
+.battle-unit.is-dashing .battle-art-wrap { position: relative; z-index: 1; will-change: transform; }
+
+.battle-fx-ring {
+  position: absolute;
+  width: calc(64px + 120px * var(--fx-power, .5));
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid #ffd39b;
+  box-shadow: 0 0 18px #ffb35a, inset 0 0 14px rgba(255, 179, 90, .5);
+  opacity: 0;
+}
+.battle-fx-ring.is-blocked { border-color: #a5dcff; box-shadow: 0 0 18px #7cc4ff, inset 0 0 14px rgba(124, 196, 255, .5); }
+
+.battle-fx-shard {
+  position: absolute;
+  width: calc(5px + 3px * var(--fx-power, .5));
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: #ffe0a8;
+  box-shadow: 0 0 6px #ffb35a;
+  opacity: 0;
+}
