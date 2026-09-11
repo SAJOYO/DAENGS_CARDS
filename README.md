@@ -31,6 +31,7 @@ py -m http.server 5173        # 또는: npx serve .
 - 홀로 스튜디오 → `http://localhost:5173/studio.html`
 - 3장 자동 대결 → `http://localhost:5173/battle.html` — 카드 선택·순서 변경·NPC 연습·재도전
 - 채소 투척전 → `http://localhost:5173/throw.html` — 캐릭터 선택·버튼/Space 타이밍 투척·NPC·재도전
+- 우당탕 식탁대전 → `http://localhost:5173/ringout.html` — 내 사진·3D 토마토/고구마·드래그 밀어내기·NPC
 
 `py` 명령이 없는 PC에서는 `python -m http.server 5173 --bind 127.0.0.1`로 실행하고
 `http://127.0.0.1:5173/battle.html`을 엽니다. 게임 규칙과 검증 방법은
@@ -40,6 +41,10 @@ py -m http.server 5173        # 또는: npx serve .
 `python -m http.server 5175 --bind 127.0.0.1`을 실행합니다.
 투척전은 `http://127.0.0.1:5175/throw.html`에서 열 수 있습니다.
 캐릭터별 타이밍과 조작·검증 방법은 [docs/throw.md](docs/throw.md)에 있습니다.
+
+식탁대전은 별도 미리보기가 필요하면 `python -m http.server 5177 --bind 127.0.0.1`로 실행하고
+`http://127.0.0.1:5177/ringout.html`을 엽니다. 사진은 이 기기에만 저장하며,
+조작·로컬 프로필·3D 런타임·비용 가정·실제 검증 범위는 [docs/ringout.md](docs/ringout.md)에 있습니다.
 
 `localhost` 는 secure context 라 **개발 중에는 자이로가 켜집니다.** 폰으로 확인하려면
 같은 LAN 에서 PC IP 로 접속해야 하는데 그건 secure context 가 아니라 안 켜집니다 —
@@ -58,6 +63,8 @@ py -m http.server 5173        # 또는: npx serve .
 | `throw-data.mjs` `throw-engine.mjs` | ID 기반 타이밍 프로필·순수 판정·턴 전이·활성 시간 |
 | `throw-renderer.mjs` `throw-audio.mjs` | 기존 누끼의 Canvas 연출과 선택적 Web Audio 합성 |
 | `tests/throw.test.mjs` | 판정 경계·중복 이벤트·재시작·9대진 스크립트 검증 |
+| `ringout.html` `ringout.css` `ringout-*.mjs` | 내 사진을 재사용하는 3D 채소 밀어내기·평면 물리·로컬 프로필 |
+| `vendor/three/` | 고정된 Three.js 0.180.0 ES 모듈·MIT 라이선스·출처. 런타임 CDN 없음 |
 | `cards.mjs` `main.js` `style.css` `rarity.css` `touch.css` | 도감 본체 |
 | `immersive.css` `immersive.mjs` | No.01 전용 이머시브 뷰 |
 | `tilt-engine.js` | 스튜디오와 내보낸 HTML 이 같이 쓰는 기울기 엔진 (자이로 포함) |
@@ -92,5 +99,7 @@ PR 한 개 단위입니다. 팀 협업 규칙(우선순위 · Iteration · PR �
 
 MIT — [LICENSE](LICENSE). `vendor/cards-css/` 는 @kongyo2/cards-css 0.5.0 (MIT) 이고
 같은 폴더에 원본 `LICENSE` 를 함께 둡니다.
+
+`vendor/three/`는 Three.js 0.180.0 (MIT)이며 해당 폴더의 라이선스와 출처 기록을 함께 유지합니다.
 
 `vendor/` 를 뺀 나머지(카드 그림 `art/` 포함)는 이 저장소의 라이선스를 따릅니다.
