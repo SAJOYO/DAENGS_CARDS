@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="theme-color" content="#eeeadd"><title>우당탕 식탁대전 · 네오 채소 도감</title>
+  <link rel="icon" href="data:,"><link rel="stylesheet" href="./ringout.css">
+</head>
+<body class="ringout">
+<main class="ro-shell">
+  <header class="ro-header"><a href="./index.html" class="ro-back">← 채소 도감</a><span class="ro-wordmark">DAENGS PLAY CLUB</span><button id="sound" aria-pressed="false">소리 끔</button></header>
+  <div class="ro-heading"><div><p class="ro-eyebrow">내 얼굴로 한 판, 식탁 위로 출동!</p><h1>우당탕 <span>식탁대전</span></h1></div><p class="ro-intro">귀여운 얼굴, 만만치 않은 한 방.<br>툭 밀어서 식탁의 마지막 채소가 되어 보세요.</p></div>
+  <div class="ro-layout">
+    <section class="ro-stage" aria-label="3D 식탁 경기장">
+      <div class="ro-stage-top"><span class="ro-pill" id="mode-label">연습 식탁 · 1 대 1</span><span id="shot-count">한 판 최대 20번</span></div>
+      <canvas id="arena" tabindex="0" aria-label="3D 경기장. 내 피규어에서 뒤로 당겼다 놓으세요. 화살표 키로 방향과 힘, 스페이스로 발사." aria-describedby="controls"></canvas>
+      <img id="entry-card" class="ro-entry-card" alt="" aria-hidden="true" hidden>
+      <div id="game-banner" class="ro-banner" aria-live="polite">오늘의 주인공을 준비해 주세요</div>
+      <div class="ro-versus"><span><i class="ro-dot"></i><b id="player-tag">네오</b> · 나</span><span class="ro-vs">VS</span><span><i class="ro-dot ro-npc"></i>연습 친구 · 네오</span></div>
+      <div class="ro-overlay" id="pause-panel" hidden><div><span class="ro-eyebrow">잠깐 쉬어 가요</span><h2>식탁이 기다리고 있어요</h2><p>움직임을 멈췄어요. 준비되면 이어서 해요.</p><button class="ro-primary" id="resume">이어서 하기</button></div></div>
+      <div class="ro-overlay" id="result-panel" hidden><div><span class="ro-eyebrow">한 판 끝!</span><h2 id="result-title"></h2><p id="result-detail"></p><button id="replay" class="ro-primary">한 판 더!</button><button id="result-select">채소 다시 고르기</button></div></div>
+      <div class="ro-overlay" id="error-panel" hidden><div><h2>3D 식탁을 열지 못했어요</h2><p id="error-detail">브라우저의 3D 그래픽을 확인한 뒤 다시 시도해 주세요.</p><button id="graphics-retry" class="ro-primary">다시 열기</button><a href="./index.html">도감으로 돌아가기</a></div></div>
+    </section>
+    <aside class="ro-panel" id="selection">
+      <div class="ro-section-title"><span>01</span><h2>오늘은 내가 주인공</h2></div>
+      <div class="ro-profile"><img id="avatar" alt="내 피규어에 붙일 얼굴"><div><label for="display-name">이름</label><div class="ro-name-row"><input id="display-name" value="네오" maxlength="24" autocomplete="off"><button id="save-name">저장</button></div></div></div>
+      <div class="ro-photo-actions"><label class="ro-photo-button" for="photo">＋ 내 사진으로 바꾸기<input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label><button id="clear-profile" class="ro-link">초기화</button></div>
+      <p class="ro-note" id="storage-note">사진은 이 기기에만 저장돼요. 원본은 업로드하지 않아요.</p><p class="ro-feedback" id="profile-feedback" role="status"></p>
+      <div class="ro-section-title"><span>02</span><h2>어떤 채소로 나갈까요?</h2></div>
+      <div class="ro-body-choices" role="group" aria-label="내 채소">
+        <button class="ro-body is-selected" data-body="tomato" aria-pressed="true"><span class="ro-produce tomato"></span><b>토마토</b><small>가볍고 쌩쌩하게</small></button>
+        <button class="ro-body" data-body="sweet-potato" aria-pressed="false"><span class="ro-produce potato"></span><b>고구마</b><small>묵직하게 꾹</small></button>
+      </div>
+      <p class="ro-note" id="body-note">가벼워서 멀리 미끄러져요. 너무 세게 당기면 나도 떨어져요!</p>
+      <label for="opponent" class="ro-opponent-label">연습 상대<select id="opponent"><option value="sweet-potato">고구마 · 묵직한 연습 친구</option><option value="tomato">토마토 · 쌩쌩한 연습 친구</option></select></label>
+      <div class="ro-reward"><span>작은 승리도 차곡차곡</span><strong id="reward-count">토마토 0승 / 3승</strong><p id="reward-note">3승이면 햇살빛 식탁 입장색이 열려요.</p></div>
+      <button id="start" class="ro-primary ro-start" disabled>피규어 준비 중…</button>
+    </aside>
+    <aside class="ro-panel ro-play-panel" id="play-controls" hidden>
+      <p class="ro-eyebrow">오늘의 한 판</p><h2 id="turn-title">내 차례예요</h2><p>내 피규어를 뒤로 당긴 만큼, 반대 방향으로 튀어나가요.</p>
+      <label for="power">힘 <output id="power-value">55%</output></label><input id="power" type="range" min="10" max="100" value="55">
+      <label for="direction">방향 <output id="direction-value">0°</output></label><input id="direction" type="range" min="-180" max="180" value="0">
+      <button id="launch" class="ro-primary">툭! 밀어내기</button><button id="pause">잠깐 쉬기</button><button id="retry">처음부터 다시</button><button id="select">채소 다시 고르기</button>
+      <p class="ro-note">몸의 중심이 식탁 밖으로 나가면 탈락! 둘 다 떨어지면 무승부예요.</p>
+    </aside>
+  </div>
+  <footer class="ro-instructions" id="controls"><span><b>마우스·터치</b> 내 피규어에서 뒤로 당겼다 놓기</span><span><b>키보드</b> 경기장 선택 → ← → 방향 · ↑ ↓ 힘 · Space 발사 · Esc 쉬기</span><span>최대 20번 안에 승부 · 사진의 배경은 직접 골라 주세요</span></footer>
+</main>
+<dialog id="crop-dialog" class="ro-crop"><form method="dialog"><button class="ro-close" aria-label="사진 편집 닫기">✕</button></form><p class="ro-eyebrow">딱, 우리 얼굴만</p><h2>얼굴이 동그라미 안에 오도록</h2><p>사진을 움직이고 크기를 조절해 주세요.<br>귀와 주둥이가 잘 보이는 위치를 직접 골라요.</p><canvas id="crop-canvas" width="512" height="512" aria-label="사진 자르기 미리보기"></canvas><label for="zoom">사진 확대</label><input id="zoom" type="range" min="0.5" max="6" step=".01" value="1"><div class="ro-crop-nudge" aria-label="사진 위치 조절"><button data-nudge="-0.04,0" aria-label="사진 왼쪽">←</button><button data-nudge="0,-0.04" aria-label="사진 위">↑</button><button data-nudge="0,0.04" aria-label="사진 아래">↓</button><button data-nudge="0.04,0" aria-label="사진 오른쪽">→</button></div><p class="ro-note">배경을 자동으로 지우지는 않아요. 투명한 사진은 투명도를 유지해요.</p><button id="confirm-photo" class="ro-primary">이 얼굴로 출동!</button></dialog>
+<script type="module" src="./ringout-ui.mjs"></script>
+</body></html>
